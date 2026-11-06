@@ -14,10 +14,12 @@
       {
         "title": "spotify-widget",
         "decorations": false,
+        "transparent": true,
+        "shadow": false,
         "width": 300,
         "height": 40,
-        "y": 1040,
-        "x": 1410,
+        "y": 1041,
+        "x": 1400,
         "skipTaskbar": true,
         "alwaysOnTop": true,
         "focusable": false
