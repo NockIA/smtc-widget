@@ -1,8 +1,4 @@
-.source-switch {
-    position: absolute;
-    top: 50%;
-    right: 8px;
-    transform: translateY(-50%);
+.icon-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -14,6 +10,6 @@
     cursor: pointer;
 }
 
-.source-switch:hover {
+.icon-button:hover {
     background: rgba(255, 255, 255, 0.25);
 }

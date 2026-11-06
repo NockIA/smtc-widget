@@ -15,6 +15,14 @@ fn next_session(state: tauri::State<'_, media::MediaState>) {
     state.request_next_session();
 }
 
+#[tauri::command]
+async fn media_control(
+    state: tauri::State<'_, media::MediaState>,
+    action: media::MediaAction,
+) -> Result<bool, String> {
+    media::send_action(state.selected().as_deref(), action).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -31,7 +39,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![current_track, next_session])
+        .invoke_handler(tauri::generate_handler![current_track, next_session, media_control])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
