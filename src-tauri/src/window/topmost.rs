@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 use tauri::WebviewWindow;
@@ -13,6 +14,23 @@ use windows::Win32::{
 };
 
 use super::constants::POLL_INTERVAL;
+
+/// Tant que c'est vrai, la fenêtre n'est plus remise au premier plan : sinon elle recouvre le menu contextuel.
+static PAUSED: AtomicBool = AtomicBool::new(false);
+
+pub struct PauseGuard;
+
+impl Drop for PauseGuard {
+    fn drop(&mut self) {
+        PAUSED.store(false, Ordering::Relaxed);
+    }
+}
+
+/// Suspend le maintien au premier plan jusqu'à la destruction du garde.
+pub fn pause_keep_on_top() -> PauseGuard {
+    PAUSED.store(true, Ordering::Relaxed);
+    PauseGuard
+}
 
 fn is_fullscreen_app_running() -> bool {
     match unsafe { SHQueryUserNotificationState() } {
@@ -39,6 +57,11 @@ pub fn keep_on_top(window: WebviewWindow) {
 
         let mut hidden = false;
         loop {
+            if PAUSED.load(Ordering::Relaxed) {
+                thread::sleep(POLL_INTERVAL);
+                continue;
+            }
+
             if is_fullscreen_app_running() {
                 if !hidden {
                     if let Err(e) = window.hide() {

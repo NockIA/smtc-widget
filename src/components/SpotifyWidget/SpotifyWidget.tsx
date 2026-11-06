@@ -30,7 +30,7 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
       onMouseLeave={panels.onMouseLeave}
       onContextMenu={(event) => {
         event.preventDefault();
-        invoke("show_context_menu").catch(console.error);
+        invoke("show_context_menu", { x: event.clientX }).catch(console.error);
       }}
     >
       <div className={`widget-handle${panels.visible ? " visible" : ""}`}>

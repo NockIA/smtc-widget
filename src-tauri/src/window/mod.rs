@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use tauri::WebviewWindow;
 
 pub use placement::list_monitors;
-pub use topmost::keep_on_top;
+pub use topmost::{keep_on_top, pause_keep_on_top};
 
 pub fn preferences_path(config_dir: PathBuf) -> PathBuf {
     config_dir.join(constants::PREFERENCES_FILE)

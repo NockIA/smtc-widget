@@ -66,9 +66,19 @@ fn build_menu(app: &AppHandle, window: &WebviewWindow) -> Result<Menu<Wry>, Box<
 }
 
 #[tauri::command]
-pub async fn show_context_menu(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+pub async fn show_context_menu(
+    app: AppHandle,
+    window: WebviewWindow,
+    x: f64,
+) -> Result<(), String> {
     let menu = build_menu(&app, &window).map_err(|e| e.to_string())?;
-    window.popup_menu(&menu).map_err(|e| e.to_string())
+
+    // Le widget est collé en bas de l'écran : le menu s'ouvre au-dessus de son bord haut,
+    // à l'abscisse du clic, pour ne pas passer derrière la barre des tâches.
+    let _pause = window::pause_keep_on_top();
+    window
+        .popup_menu_at(&menu, tauri::LogicalPosition::new(x, 0.0))
+        .map_err(|e| e.to_string())
 }
 
 fn set_theme(app: &AppHandle, theme: ThemePreference) {
