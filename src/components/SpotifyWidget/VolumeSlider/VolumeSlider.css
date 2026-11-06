@@ -1,0 +1,40 @@
+.volume-slider {
+    --track-height: 4px;
+    --thumb-size: 12px;
+    --track-bg: #444444;
+
+    width: 70px;
+    height: var(--thumb-size);
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Piste : partie remplie en orange (jusqu'à --fill), reste en gris foncé. */
+.volume-slider::-webkit-slider-runnable-track {
+    height: var(--track-height);
+    border-radius: calc(var(--track-height) / 2);
+    background: linear-gradient(
+        to right,
+        var(--orange) var(--fill),
+        var(--track-bg) var(--fill)
+    );
+}
+
+/* Pastille ronde blanche, centrée sur la piste. */
+.volume-slider::-webkit-slider-thumb {
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    margin-top: calc((var(--track-height) - var(--thumb-size)) / 2);
+    border: none;
+    border-radius: 50%;
+    background: var(--white);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.volume-slider:focus {
+    outline: none;
+}

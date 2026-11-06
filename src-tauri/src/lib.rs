@@ -23,6 +23,20 @@ async fn media_control(
     media::send_action(state.selected().as_deref(), action).map_err(|e| e.to_string())
 }
 
+/// Volume (0.0 à 1.0) de la source courante, `None` si aucune session audio ne correspond.
+#[tauri::command]
+async fn get_volume(state: tauri::State<'_, media::MediaState>) -> Result<Option<f32>, String> {
+    media::get_volume(state.selected().as_deref()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn set_volume(
+    state: tauri::State<'_, media::MediaState>,
+    volume: f32,
+) -> Result<bool, String> {
+    media::set_volume(state.selected().as_deref(), volume).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -40,7 +54,13 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![current_track, next_session, media_control])
+        .invoke_handler(tauri::generate_handler![
+            current_track,
+            next_session,
+            media_control,
+            get_volume,
+            set_volume
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
