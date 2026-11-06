@@ -3,6 +3,7 @@ import { useProgress } from "../../hooks/useProgress";
 import TrackProgress from "./TrackProgress/TrackProgress";
 import SourceSwitch from "./SourceSwitch/SourceSwitch";
 import MediaControls from "./MediaControls/MediaControls";
+import DragHandle from "./DragHandle/DragHandle";
 import "./SpotifyWidget.css";
 
 interface SpotifyWidgetProps {
@@ -28,6 +29,7 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
   }
   return (
     <div className="spotify-widget">
+      <DragHandle />
       {content}
       {track !== null && (
         <div className="widget-actions">
