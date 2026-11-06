@@ -4,11 +4,11 @@
     right: 0;
     bottom: 0;
     height: var(--progress-height);
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--progress-bg);
 }
 
 .progress-bar {
     height: 100%;
-    background: var(--orange);
+    background: var(--accent);
     transition: width 0.25s linear;
 }

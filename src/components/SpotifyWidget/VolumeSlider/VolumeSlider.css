@@ -1,7 +1,7 @@
 .volume-slider {
     --track-height: 4px;
     --thumb-size: 12px;
-    --track-bg: #444444;
+    --track-bg: var(--slider-track);
 
     width: 70px;
     height: var(--thumb-size);
@@ -17,7 +17,7 @@
     border-radius: calc(var(--track-height) / 2);
     background: linear-gradient(
         to right,
-        var(--orange) var(--fill),
+        var(--accent) var(--fill),
         var(--track-bg) var(--fill)
     );
 }
@@ -28,7 +28,7 @@
     margin-top: calc((var(--track-height) - var(--thumb-size)) / 2);
     border: none;
     border-radius: 50%;
-    background: var(--white);
+    background: var(--text);
     -webkit-appearance: none;
     appearance: none;
 }

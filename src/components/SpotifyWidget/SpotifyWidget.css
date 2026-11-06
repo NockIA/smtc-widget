@@ -6,9 +6,9 @@
     justify-content: center;
     align-items: start;
     width: 100vw;
-    height: calc(100vh - 2px);
+    height: 100vh;
     border-radius: 3px;
-    background: var(--black);
+    background: var(--bg);
     overflow: hidden;
     position: relative;
     padding: 1px 10px;
@@ -35,7 +35,7 @@
 .track-footer {
     font-weight: 400;
     font-size: 11px;
-    color: var(--grey);
+    color: var(--text-muted);
     margin-top: -8px;
     white-space: nowrap;
     overflow: hidden;
@@ -50,7 +50,7 @@
     align-items: center;
     gap: 4px;
     padding: 0 8px 0 24px;
-    background: linear-gradient(to right, transparent, var(--black) 20px);
+    background: linear-gradient(to right, transparent, var(--bg) 20px);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;
@@ -67,7 +67,7 @@
     left: 0;
     bottom: var(--progress-height);
     width: 14px;
-    background: var(--black);
+    background: var(--bg);
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;

@@ -1,6 +1,24 @@
 :root {
-    --white: #ffffff;
-    --black: #000000;
-    --grey: #aaaaaa;
-    --orange: #ca7805;
+    color-scheme: dark light;
+
+    --bg: #000000;
+    --text: #ffffff;
+    --text-muted: #aaaaaa;
+    --accent: #ca7805;
+    --surface: rgba(255, 255, 255, 0.1);
+    --surface-hover: rgba(255, 255, 255, 0.25);
+    --progress-bg: rgba(255, 255, 255, 0.15);
+    --slider-track: #444444;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #d5d5d5;
+        --text: #111111;
+        --text-muted: #666666;
+        --surface: rgba(0, 0, 0, 0.08);
+        --surface-hover: rgba(0, 0, 0, 0.16);
+        --progress-bg: rgba(0, 0, 0, 0.12);
+        --slider-track: #d0d0d0;
+    }
 }

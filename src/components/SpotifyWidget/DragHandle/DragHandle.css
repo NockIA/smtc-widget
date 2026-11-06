@@ -8,12 +8,12 @@
     align-items: center;
     padding-left: 6px;
     padding-bottom: 4px;
-    color: var(--grey);
+    color: var(--text-muted);
     cursor: grab;
 }
 
 .drag-handle:hover {
-    color: var(--white);
+    color: var(--text);
 }
 
 .drag-handle:active {
