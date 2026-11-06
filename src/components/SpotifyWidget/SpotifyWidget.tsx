@@ -4,6 +4,7 @@ import TrackProgress from "./TrackProgress/TrackProgress";
 import SourceSwitch from "./SourceSwitch/SourceSwitch";
 import MediaControls from "./MediaControls/MediaControls";
 import DragHandle from "./DragHandle/DragHandle";
+import MarqueeText from "./MarqueeText/MarqueeText";
 import CloseButton from "./CloseButton/CloseButton";
 import VolumeControl from "./VolumeControl/VolumeControl";
 import { useVolume } from "../../hooks/useVolume";
@@ -38,10 +39,11 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
           <p className="track-title">Aucun morceau détecté</p>
         ) : (
           <>
-            <p className="track-title">{track.title}</p>
-            <p className="track-footer">
-              {[track.artist, track.album].filter(Boolean).join(" - ")}
-            </p>
+            <MarqueeText className="track-title" text={track.title} />
+            <MarqueeText
+              className="track-footer"
+              text={[track.artist, track.album].filter(Boolean).join(" - ")}
+            />
           </>
         )}
       </div>

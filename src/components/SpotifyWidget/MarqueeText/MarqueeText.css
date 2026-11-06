@@ -1,0 +1,26 @@
+.marquee-track {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.marquee-item {
+    display: inline-block;
+}
+
+.marquee-track.scrolling .marquee-item {
+    margin-right: var(--marquee-gap);
+}
+
+.marquee-track.scrolling {
+    animation: marquee var(--marquee-duration) linear infinite;
+}
+
+@keyframes marquee {
+    0%,
+    15% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(calc(-1 * var(--marquee-distance)));
+    }
+}

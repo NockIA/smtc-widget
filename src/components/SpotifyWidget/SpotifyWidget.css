@@ -30,7 +30,6 @@
     font-size: 13px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .track-footer {
@@ -40,7 +39,6 @@
     margin-top: -8px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .widget-actions {
