@@ -1,19 +1,14 @@
 use std::sync::Mutex;
 use std::sync::mpsc::Sender;
 
-pub enum MediaCommand {
-    Refresh,
-    NextSession,
-}
-
 pub struct MediaState {
     /// Source choisie par l'utilisateur ; `None` = session par défaut de Windows.
     selected: Mutex<Option<String>>,
-    tx: Sender<MediaCommand>,
+    tx: Sender<()>,
 }
 
 impl MediaState {
-    pub fn new(tx: Sender<MediaCommand>) -> Self {
+    pub fn new(tx: Sender<()>) -> Self {
         Self {
             selected: Mutex::new(None),
             tx,
@@ -24,11 +19,9 @@ impl MediaState {
         self.selected.lock().unwrap().clone()
     }
 
-    pub fn set_selected(&self, source_id: String) {
+    /// Choisit la source et demande au thread d'écoute de se réabonner.
+    pub fn select_source(&self, source_id: String) {
         *self.selected.lock().unwrap() = Some(source_id);
-    }
-
-    pub fn request_next_session(&self) {
-        let _ = self.tx.send(MediaCommand::NextSession);
+        let _ = self.tx.send(());
     }
 }

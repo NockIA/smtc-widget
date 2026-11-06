@@ -1,7 +1,11 @@
+mod context_menu;
 mod media;
+mod settings;
 mod window;
 
 use tauri::Manager;
+
+use settings::{SETTINGS_FILE, SettingsState};
 
 #[tauri::command]
 async fn current_track(
@@ -11,21 +15,11 @@ async fn current_track(
 }
 
 #[tauri::command]
-fn next_session(state: tauri::State<'_, media::MediaState>) {
-    state.request_next_session();
-}
-
-#[tauri::command]
 async fn media_control(
     state: tauri::State<'_, media::MediaState>,
     action: media::MediaAction,
 ) -> Result<bool, String> {
     media::send_action(state.selected().as_deref(), action).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn quit_app(app: tauri::AppHandle) {
-    app.exit(0);
 }
 
 /// Volume (0.0 à 1.0) de la source courante, `None` si aucune session audio ne correspond.
@@ -46,26 +40,32 @@ async fn set_volume(
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            let config_dir = app.path().app_config_dir()?;
+
             let main_window = app
                 .get_webview_window("main")
                 .expect("fenêtre 'main' introuvable");
-            window::init_placement(
-                main_window.clone(),
-                window::preferences_path(app.path().app_config_dir()?),
-            );
+
+            let settings = SettingsState::load(config_dir.join(SETTINGS_FILE));
+            if let Err(e) = settings::apply_theme(&main_window, settings.theme()) {
+                eprintln!("application du thème échouée : {e}");
+            }
+            app.manage(settings);
+
+            window::init_placement(main_window.clone(), window::preferences_path(config_dir));
             window::keep_on_top(main_window);
 
             media::start_listening(app.handle().clone());
 
             Ok(())
         })
+        .on_menu_event(context_menu::handle_menu_event)
         .invoke_handler(tauri::generate_handler![
             current_track,
-            next_session,
             media_control,
             get_volume,
             set_volume,
-            quit_app
+            context_menu::show_context_menu
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

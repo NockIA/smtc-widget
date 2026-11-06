@@ -12,5 +12,4 @@ pub struct TrackInfo {
     pub duration_ms: u64,
     pub is_playing: bool,
     pub source: String,
-    pub session_count: usize,
 }

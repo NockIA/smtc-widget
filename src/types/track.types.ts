@@ -6,7 +6,6 @@ export interface TrackInfo {
   durationMs: number;
   isPlaying: boolean;
   source: string;
-  sessionCount: number;
 }
 
 export interface TrackState {

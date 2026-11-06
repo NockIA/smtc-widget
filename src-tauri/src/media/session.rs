@@ -33,18 +33,3 @@ pub fn resolve_session(manager: &SmtcManager, selected: Option<&str>) -> Option<
         })
         .or_else(|| manager.GetCurrentSession().ok())
 }
-
-/// `None` s'il y a moins de deux sources.
-pub fn next_source_id(manager: &SmtcManager, selected: Option<&str>) -> Option<String> {
-    let ids: Vec<String> = all_sessions(manager).iter().map(source_id).collect();
-    if ids.len() < 2 {
-        return None;
-    }
-
-    let current = resolve_session(manager, selected)
-        .map(|s| source_id(&s))
-        .and_then(|id| ids.iter().position(|i| *i == id))
-        .unwrap_or(0);
-
-    Some(ids[(current + 1) % ids.len()].clone())
-}

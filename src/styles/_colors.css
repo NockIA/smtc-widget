@@ -18,7 +18,7 @@
         --text-muted: #666666;
         --surface: rgba(0, 0, 0, 0.08);
         --surface-hover: rgba(0, 0, 0, 0.16);
-        --progress-bg: rgba(0, 0, 0, 0.12);
-        --slider-track: #d0d0d0;
+        --progress-bg: rgba(0, 0, 0, 0.25);
+        --slider-track: #a6a6a6;
     }
 }

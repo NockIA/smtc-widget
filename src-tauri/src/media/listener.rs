@@ -4,8 +4,8 @@ use tauri::{AppHandle, Emitter, Manager};
 use windows::Foundation::TypedEventHandler;
 
 use super::constants::MEDIA_CHANGED_EVENT;
-use super::session::{Session, SmtcManager, next_source_id, request_manager, resolve_session};
-use super::state::{MediaCommand, MediaState};
+use super::session::{Session, SmtcManager, request_manager, resolve_session};
+use super::state::MediaState;
 use super::track::get_current_track;
 
 macro_rules! emit_on_event {
@@ -22,7 +22,7 @@ macro_rules! refresh_on_event {
     ($tx:expr) => {{
         let tx = $tx.clone();
         TypedEventHandler::new(move |_, _| {
-            let _ = tx.send(MediaCommand::Refresh);
+            let _ = tx.send(());
             Ok(())
         })
     }};
@@ -82,17 +82,10 @@ fn resubscribe(
     Ok(())
 }
 
-fn select_next_session(manager: &SmtcManager, app: &AppHandle) {
-    let state = app.state::<MediaState>();
-    if let Some(id) = next_source_id(manager, state.selected().as_deref()) {
-        state.set_selected(id);
-    }
-}
-
 fn run_listener(
     app: AppHandle,
-    rx: Receiver<MediaCommand>,
-    tx: Sender<MediaCommand>,
+    rx: Receiver<()>,
+    tx: Sender<()>,
 ) -> windows::core::Result<()> {
     let manager = request_manager()?;
     let mut subscription = None;
@@ -104,10 +97,7 @@ fn run_listener(
     emit_current_track(&app);
 
     // Le thread garde manager et session en vie.
-    while let Ok(command) = rx.recv() {
-        if let MediaCommand::NextSession = command {
-            select_next_session(&manager, &app);
-        }
+    while rx.recv().is_ok() {
         if let Err(e) = resubscribe(&manager, &app, &mut subscription) {
             eprintln!("réabonnement à la session a échoué : {e}");
         }

@@ -1,11 +1,10 @@
+import { invoke } from "@tauri-apps/api/core";
 import { TrackInfo } from "../../types/track.types";
 import { useProgress } from "../../hooks/useProgress";
 import TrackProgress from "./TrackProgress/TrackProgress";
-import SourceSwitch from "./SourceSwitch/SourceSwitch";
 import MediaControls from "./MediaControls/MediaControls";
 import DragHandle from "./DragHandle/DragHandle";
 import MarqueeText from "./MarqueeText/MarqueeText";
-import CloseButton from "./CloseButton/CloseButton";
 import VolumeControl from "./VolumeControl/VolumeControl";
 import { useVolume } from "../../hooks/useVolume";
 import { useHoverPanel } from "../../hooks/useHoverPanel";
@@ -29,9 +28,12 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
         panels.onMouseEnter();
       }}
       onMouseLeave={panels.onMouseLeave}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        invoke("show_context_menu").catch(console.error);
+      }}
     >
       <div className={`widget-handle${panels.visible ? " visible" : ""}`}>
-        <CloseButton />
         <DragHandle />
       </div>
       <div className={`widget-content${panels.visible ? " shifted" : ""}`}>
@@ -53,7 +55,6 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
           {volume !== null && (
             <VolumeControl volume={volume} onChange={setVolume} />
           )}
-          {track.sessionCount > 1 && <SourceSwitch />}
         </div>
       )}
       {progress !== null && <TrackProgress progress={progress} />}

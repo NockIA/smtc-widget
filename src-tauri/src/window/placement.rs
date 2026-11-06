@@ -105,3 +105,57 @@ pub fn place_on_preferred_monitor(
     };
     apply(window, &monitor, placement)
 }
+
+pub struct MonitorEntry {
+    pub key: String,
+    pub label: String,
+    pub current: bool,
+}
+
+pub fn list_monitors(window: &WebviewWindow) -> tauri::Result<Vec<MonitorEntry>> {
+    let primary = window.primary_monitor()?;
+    let current = window.current_monitor()?.map(|m| monitor_key(&m));
+
+    Ok(window
+        .available_monitors()?
+        .iter()
+        .enumerate()
+        .map(|(index, monitor)| {
+            let key = monitor_key(monitor);
+            let suffix = if is_secondary(primary.as_ref(), monitor) {
+                ""
+            } else {
+                " (principal)"
+            };
+            MonitorEntry {
+                label: format!(
+                    "Écran {} - {}x{}{}",
+                    index + 1,
+                    monitor.size().width,
+                    monitor.size().height,
+                    suffix
+                ),
+                current: current.as_deref() == Some(key.as_str()),
+                key,
+            }
+        })
+        .collect())
+}
+
+/// Déplace la fenêtre sur l'écran `key`, à sa position sauvegardée ou par défaut.
+pub fn move_to_monitor(
+    window: &WebviewWindow,
+    prefs: &WindowPreferences,
+    key: &str,
+) -> tauri::Result<()> {
+    let monitors = window.available_monitors()?;
+    let Some(monitor) = monitors.iter().find(|m| monitor_key(m) == key) else {
+        return Ok(());
+    };
+
+    let placement = match prefs.monitors.get(key) {
+        Some(saved) => *saved,
+        None => default_placement(window, monitor)?,
+    };
+    apply(window, monitor, placement)
+}
