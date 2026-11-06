@@ -13,14 +13,11 @@ use windows::core::{Interface, PWSTR};
 
 use super::session::{request_manager, resolve_session, source_id};
 
-/// Longueur minimale du nom d'exécutable (sans `.exe`) pour le rapprocher d'une source SMTC.
-/// Évite les faux positifs avec des noms très courts.
+/// Évite les faux positifs avec des noms d'exécutable très courts.
 const MIN_EXE_STEM_LEN: usize = 3;
 
-/// Taille du buffer pour le chemin de l'exécutable (MAX_PATH).
 const PATH_BUFFER_LEN: usize = 260;
 
-/// Initialise COM sur le thread courant et le libère à la fin.
 struct ComGuard(bool);
 
 impl ComGuard {
@@ -39,7 +36,6 @@ impl Drop for ComGuard {
     }
 }
 
-/// Nom du fichier exécutable (ex : "Spotify.exe") du processus `pid`.
 fn process_exe_name(pid: u32) -> Option<String> {
     unsafe {
         let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
@@ -72,7 +68,6 @@ fn source_matches(source: &str, exe: &str) -> bool {
     stem.len() >= MIN_EXE_STEM_LEN && source.contains(stem)
 }
 
-/// Contrôles de volume de toutes les sessions audio de la source.
 fn source_volumes(source: &str) -> windows::core::Result<Vec<ISimpleAudioVolume>> {
     unsafe {
         let enumerator: IMMDeviceEnumerator =
@@ -99,7 +94,6 @@ fn source_volumes(source: &str) -> windows::core::Result<Vec<ISimpleAudioVolume>
     }
 }
 
-/// Identifiant de la source choisie (ou de la session par défaut de Windows).
 fn current_source(selected: Option<&str>) -> windows::core::Result<Option<String>> {
     let manager = request_manager()?;
     Ok(resolve_session(&manager, selected).map(|session| source_id(&session)))
@@ -120,7 +114,6 @@ pub fn get_volume(selected: Option<&str>) -> windows::core::Result<Option<f32>> 
     Ok(volume)
 }
 
-/// Règle le volume (0.0 à 1.0) de la source courante.
 /// Renvoie `false` si aucune session audio ne correspond.
 pub fn set_volume(selected: Option<&str>, volume: f32) -> windows::core::Result<bool> {
     let Some(source) = current_source(selected)? else {

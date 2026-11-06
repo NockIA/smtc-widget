@@ -8,7 +8,6 @@ use super::session::{Session, SmtcManager, next_source_id, request_manager, reso
 use super::state::{MediaCommand, MediaState};
 use super::track::get_current_track;
 
-/// Crée un handler d'événement qui relit le morceau et l'envoie au front.
 macro_rules! emit_on_event {
     ($app:expr) => {{
         let app = $app.clone();
@@ -19,7 +18,6 @@ macro_rules! emit_on_event {
     }};
 }
 
-/// Crée un handler d'événement qui demande au thread d'écoute de se resynchroniser.
 macro_rules! refresh_on_event {
     ($tx:expr) => {{
         let tx = $tx.clone();
@@ -30,7 +28,6 @@ macro_rules! refresh_on_event {
     }};
 }
 
-/// Abonnement aux événements d'une session (propriétés, timeline, lecture).
 struct SessionSubscription {
     session: Session,
     media_token: i64,
@@ -57,7 +54,6 @@ impl SessionSubscription {
     }
 }
 
-/// Relit le morceau courant et l'envoie au front.
 fn emit_current_track(app: &AppHandle) {
     let selected = app.state::<MediaState>().selected();
     match get_current_track(selected.as_deref()) {
@@ -70,7 +66,6 @@ fn emit_current_track(app: &AppHandle) {
     }
 }
 
-/// Retire l'ancien abonnement et s'abonne à la session résolue.
 fn resubscribe(
     manager: &SmtcManager,
     app: &AppHandle,
@@ -87,7 +82,6 @@ fn resubscribe(
     Ok(())
 }
 
-/// Mémorise la source suivante comme source choisie.
 fn select_next_session(manager: &SmtcManager, app: &AppHandle) {
     let state = app.state::<MediaState>();
     if let Some(id) = next_source_id(manager, state.selected().as_deref()) {
@@ -103,14 +97,13 @@ fn run_listener(
     let manager = request_manager()?;
     let mut subscription = None;
 
-    // Session active de Windows qui change, ou source qui apparaît / disparaît.
     manager.CurrentSessionChanged(&refresh_on_event!(tx))?;
     manager.SessionsChanged(&refresh_on_event!(tx))?;
 
     resubscribe(&manager, &app, &mut subscription)?;
     emit_current_track(&app);
 
-    // Le thread (donc manager et session) reste en vie tant que l'appli tourne.
+    // Le thread garde manager et session en vie.
     while let Ok(command) = rx.recv() {
         if let MediaCommand::NextSession = command {
             select_next_session(&manager, &app);

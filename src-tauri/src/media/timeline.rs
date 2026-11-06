@@ -3,10 +3,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use super::constants::{NANOS_PER_TICK, TICKS_PER_MS, WINDOWS_TO_UNIX_EPOCH_TICKS};
 use super::session::Session;
 
-/// Position et durée d'un morceau, en millisecondes.
 pub struct Timeline {
     pub position_ms: u64,
-    /// 0 si la durée est inconnue.
     pub duration_ms: u64,
 }
 
@@ -39,7 +37,6 @@ impl Timeline {
     }
 }
 
-/// Instant présent, en ticks de 100 ns depuis l'epoch Unix.
 fn now_ticks() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -1,12 +1,13 @@
 .drag-handle {
     position: absolute;
-    top: 0;
+    top: 16px;
     left: 0;
     bottom: 0;
     width: 14px;
     display: flex;
     align-items: center;
-    padding-left: 5px;
+    padding-left: 6px;
+    padding-bottom: 4px;
     color: var(--grey);
     cursor: grab;
 }

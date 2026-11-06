@@ -4,7 +4,6 @@ use super::models::TrackInfo;
 use super::session::{all_sessions, request_manager, resolve_session, source_id};
 use super::timeline::Timeline;
 
-/// Lit le morceau de la source choisie (ou de la session par défaut de Windows).
 pub fn get_current_track(selected: Option<&str>) -> windows::core::Result<Option<TrackInfo>> {
     let manager = request_manager()?;
 

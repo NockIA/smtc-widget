@@ -15,12 +15,10 @@ pub fn monitor_key(monitor: &Monitor) -> String {
     )
 }
 
-/// Vrai si `monitor` n'est pas l'écran principal.
 fn is_secondary(primary: Option<&Monitor>, monitor: &Monitor) -> bool {
     primary.is_none_or(|p| monitor.position() != p.position())
 }
 
-/// Position par défaut du widget sur cet écran (hors préférences).
 pub fn default_placement(
     window: &WebviewWindow,
     monitor: &Monitor,
@@ -37,7 +35,6 @@ pub fn default_placement(
     })
 }
 
-/// Position actuelle de la fenêtre, en marges par rapport au coin bas-droit de l'écran.
 pub fn current_placement(
     window: &WebviewWindow,
     monitor: &Monitor,
@@ -74,8 +71,6 @@ fn apply(
     window.set_position(PhysicalPosition::new(x, y))
 }
 
-/// Choisit l'écran : le dernier utilisé s'il est toujours là, sinon le secondaire,
-/// sinon le principal.
 fn choose_monitor(
     window: &WebviewWindow,
     prefs: &WindowPreferences,
@@ -96,7 +91,6 @@ fn choose_monitor(
         .cloned())
 }
 
-/// Place la fenêtre à sa position sauvegardée pour l'écran choisi, ou à sa position par défaut.
 pub fn place_on_preferred_monitor(
     window: &WebviewWindow,
     prefs: &WindowPreferences,

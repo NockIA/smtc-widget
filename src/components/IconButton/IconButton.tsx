@@ -7,7 +7,6 @@ interface IconButtonProps {
   children: ReactNode;
 }
 
-/** Bouton rond contenant une icône SVG (en `currentColor`). */
 const IconButton = ({ label, onClick, children }: IconButtonProps) => (
   <button
     className="icon-button"

@@ -12,7 +12,6 @@
     appearance: none;
 }
 
-/* Piste : partie remplie en orange (jusqu'à --fill), reste en gris foncé. */
 .volume-slider::-webkit-slider-runnable-track {
     height: var(--track-height);
     border-radius: calc(var(--track-height) / 2);
@@ -23,7 +22,6 @@
     );
 }
 
-/* Pastille ronde blanche, centrée sur la piste. */
 .volume-slider::-webkit-slider-thumb {
     width: var(--thumb-size);
     height: var(--thumb-size);

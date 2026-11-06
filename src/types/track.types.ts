@@ -11,6 +11,6 @@ export interface TrackInfo {
 
 export interface TrackState {
   track: TrackInfo | null;
-  /** Instant (performance.now) où la position a été reçue, pour l'interpolation. */
+  /** performance.now() à la réception, pour interpoler la progression. */
   receivedAt: number;
 }

@@ -2,7 +2,7 @@ import { CSSProperties } from "react";
 import "./VolumeSlider.css";
 
 interface VolumeSliderProps {
-  /** Valeur entre 0 et 1. */
+  /** 0 à 1. */
   volume: number;
   onChange: (volume: number) => void;
 }

@@ -10,12 +10,10 @@ use tauri::WebviewWindow;
 
 pub use topmost::keep_on_top;
 
-/// Chemin du fichier de préférences dans le dossier de config de l'appli.
 pub fn preferences_path(config_dir: PathBuf) -> PathBuf {
     config_dir.join(constants::PREFERENCES_FILE)
 }
 
-/// Place la fenêtre selon les préférences sauvegardées, puis sauvegarde ses déplacements.
 pub fn init_placement(window: WebviewWindow, preferences_path: PathBuf) {
     let prefs = preferences::WindowPreferences::load(&preferences_path);
 

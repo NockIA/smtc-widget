@@ -1,4 +1,6 @@
 .spotify-widget {
+    --progress-height: 2.5px;
+
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -9,7 +11,18 @@
     background: var(--black);
     overflow: hidden;
     position: relative;
-    padding: 2px 10px 2px 19px;
+    padding: 1px 10px;
+}
+
+.widget-content {
+    min-width: 0;
+    max-width: 100%;
+    margin-left: 0;
+    transition: margin-left 0.25s ease;
+}
+
+.widget-content.shifted {
+    margin-left: 9px;
 }
 
 .track-title {
@@ -30,7 +43,6 @@
     text-overflow: ellipsis;
 }
 
-/* Boutons affichés au survol, par-dessus la partie droite du texte. */
 .widget-actions {
     position: absolute;
     top: 0;
@@ -42,9 +54,32 @@
     padding: 0 8px 0 24px;
     background: linear-gradient(to right, transparent, var(--black) 20px);
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.15s;
 }
 
-.spotify-widget:hover .widget-actions {
+.widget-actions.visible {
     opacity: 1;
+    pointer-events: auto;
+}
+
+.widget-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: var(--progress-height);
+    width: 14px;
+    background: var(--black);
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform 0.25s ease,
+        opacity 0.25s ease;
+}
+
+.widget-handle.visible {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
 }

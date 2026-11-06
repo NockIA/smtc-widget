@@ -4,16 +4,14 @@ import VolumeSlider from "../VolumeSlider/VolumeSlider";
 import "./VolumeControl.css";
 
 interface VolumeControlProps {
-  /** Valeur entre 0 et 1. */
+  /** 0 à 1. */
   volume: number;
   onChange: (volume: number) => void;
 }
 
-/** Bouton haut-parleur ; un clic déplie le curseur de volume à sa droite. */
 const VolumeControl = ({ volume, onChange }: VolumeControlProps) => {
   const [open, setOpen] = useState(false);
 
-  // Replie le curseur quand la souris quitte la fenêtre.
   useEffect(() => {
     const close = () => setOpen(false);
     document.documentElement.addEventListener("mouseleave", close);

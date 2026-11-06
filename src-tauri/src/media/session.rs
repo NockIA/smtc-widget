@@ -9,7 +9,6 @@ pub fn request_manager() -> windows::core::Result<SmtcManager> {
     SmtcManager::RequestAsync()?.join()
 }
 
-/// Identifiant de l'application à l'origine de la session (ex : "Spotify.exe").
 pub fn source_id(session: &Session) -> String {
     session
         .SourceAppUserModelId()
@@ -35,7 +34,6 @@ pub fn resolve_session(manager: &SmtcManager, selected: Option<&str>) -> Option<
         .or_else(|| manager.GetCurrentSession().ok())
 }
 
-/// Identifiant de la source qui suit la source courante (cyclique).
 /// `None` s'il y a moins de deux sources.
 pub fn next_source_id(manager: &SmtcManager, selected: Option<&str>) -> Option<String> {
     let ids: Vec<String> = all_sessions(manager).iter().map(source_id).collect();

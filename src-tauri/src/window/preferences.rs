@@ -22,18 +22,14 @@ impl MonitorPlacement {
     }
 }
 
-/// Préférences de fenêtre sauvegardées, une position par écran.
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowPreferences {
-    /// Dernier écran sur lequel le widget se trouvait.
     pub last_monitor: Option<String>,
-    /// Position personnalisée par écran (clé = `monitor_key`).
     pub monitors: HashMap<String, MonitorPlacement>,
 }
 
 impl WindowPreferences {
-    /// Charge le fichier ; préférences vides s'il est absent ou illisible.
     pub fn load(path: &Path) -> Self {
         fs::read_to_string(path)
             .ok()

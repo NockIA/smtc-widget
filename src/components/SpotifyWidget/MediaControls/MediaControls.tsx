@@ -10,7 +10,6 @@ interface MediaControlsProps {
   isPlaying: boolean;
 }
 
-/** Précédent, lecture / pause, suivant. */
 const MediaControls = ({ isPlaying }: MediaControlsProps) => (
   <>
     <IconButton label="Précédent" onClick={() => sendAction("previous")}>

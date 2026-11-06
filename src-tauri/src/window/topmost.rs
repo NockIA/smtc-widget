@@ -14,7 +14,6 @@ use windows::Win32::{
 
 use super::constants::POLL_INTERVAL;
 
-/// Vrai si une app occupe tout l'écran (vidéo, jeu, présentation).
 fn is_fullscreen_app_running() -> bool {
     match unsafe { SHQueryUserNotificationState() } {
         Ok(state) => matches!(

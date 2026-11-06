@@ -9,8 +9,7 @@ use super::constants::SAVE_DEBOUNCE;
 use super::placement::{current_placement, default_placement, monitor_key};
 use super::preferences::WindowPreferences;
 
-/// Sauvegarde la position de la fenêtre pour l'écran où elle se trouve.
-/// Une position identique à celle par défaut supprime la préférence de cet écran.
+/// Une position identique à celle par défaut supprime la préférence de l'écran.
 fn save_current_position(
     window: &WebviewWindow,
     path: &Path,
@@ -33,7 +32,6 @@ fn save_current_position(
     Ok(())
 }
 
-/// Sauvegarde la position quand la fenêtre arrête de bouger (débouncé).
 pub fn track_moves(window: WebviewWindow, path: PathBuf, mut prefs: WindowPreferences) {
     let (tx, rx) = mpsc::channel::<()>();
 
@@ -45,7 +43,6 @@ pub fn track_moves(window: WebviewWindow, path: PathBuf, mut prefs: WindowPrefer
 
     thread::spawn(move || {
         while rx.recv().is_ok() {
-            // Attend que les mouvements s'arrêtent.
             while rx.recv_timeout(SAVE_DEBOUNCE).is_ok() {}
 
             if let Err(e) = save_current_position(&window, &path, &mut prefs) {

@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import IconButton from "../../IconButton/IconButton";
 
-/** Bouton qui passe à la source audio suivante. */
 const SourceSwitch = () => (
   <IconButton
     label="Changer de source audio"
