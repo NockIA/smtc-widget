@@ -30,9 +30,10 @@ pub fn run() {
             let main_window = app
                 .get_webview_window("main")
                 .expect("fenêtre 'main' introuvable");
-            if let Err(e) = window::place_on_preferred_monitor(&main_window) {
-                eprintln!("placement de la fenêtre échoué : {e}");
-            }
+            window::init_placement(
+                main_window.clone(),
+                window::preferences_path(app.path().app_config_dir()?),
+            );
             window::keep_on_top(main_window);
 
             media::start_listening(app.handle().clone());

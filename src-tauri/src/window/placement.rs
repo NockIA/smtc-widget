@@ -1,34 +1,113 @@
-use tauri::WebviewWindow;
+use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 
-use super::constants::{PRIMARY_SCREEN_RIGHT_MARGIN, SECONDARY_SCREEN_RIGHT_MARGIN};
+use super::constants::{
+    DEFAULT_BOTTOM_MARGIN, PRIMARY_SCREEN_RIGHT_MARGIN, SECONDARY_SCREEN_RIGHT_MARGIN,
+};
+use super::preferences::{MonitorPlacement, WindowPreferences};
 
-/// Place la fenêtre en bas à droite de l'écran secondaire s'il existe, sinon de l'écran principal.
-pub fn place_on_preferred_monitor(window: &WebviewWindow) -> tauri::Result<()> {
+/// Identifiant d'un écran pour les préférences : nom + résolution.
+pub fn monitor_key(monitor: &Monitor) -> String {
+    format!(
+        "{}@{}x{}",
+        monitor.name().map(String::as_str).unwrap_or("inconnu"),
+        monitor.size().width,
+        monitor.size().height
+    )
+}
+
+/// Vrai si `monitor` n'est pas l'écran principal.
+fn is_secondary(primary: Option<&Monitor>, monitor: &Monitor) -> bool {
+    primary.is_none_or(|p| monitor.position() != p.position())
+}
+
+/// Position par défaut du widget sur cet écran (hors préférences).
+pub fn default_placement(
+    window: &WebviewWindow,
+    monitor: &Monitor,
+) -> tauri::Result<MonitorPlacement> {
     let primary = window.primary_monitor()?;
-    let monitors = window.available_monitors()?;
-
-    let secondary = monitors.iter().find(|m| {
-        primary
-            .as_ref()
-            .is_none_or(|p| m.position() != p.position())
-    });
-
-    let target = secondary.or(primary.as_ref()).or(monitors.first());
-
-    let Some(monitor) = target else {
-        return Ok(());
-    };
-
-    let right_margin = if secondary.is_some() {
+    let right_margin = if is_secondary(primary.as_ref(), monitor) {
         SECONDARY_SCREEN_RIGHT_MARGIN
     } else {
         PRIMARY_SCREEN_RIGHT_MARGIN
     };
+    Ok(MonitorPlacement {
+        right_margin,
+        bottom_margin: DEFAULT_BOTTOM_MARGIN,
+    })
+}
 
+/// Position actuelle de la fenêtre, en marges par rapport au coin bas-droit de l'écran.
+pub fn current_placement(
+    window: &WebviewWindow,
+    monitor: &Monitor,
+) -> tauri::Result<MonitorPlacement> {
+    let position = window.outer_position()?;
     let size = window.outer_size()?;
-    let margin = (right_margin * monitor.scale_factor()) as i32;
-    let x = monitor.position().x + monitor.size().width as i32 - size.width as i32 - margin;
-    let y = monitor.position().y + monitor.size().height as i32 - size.height as i32;
+    let scale = monitor.scale_factor();
 
-    window.set_position(tauri::PhysicalPosition::new(x, y))
+    let right =
+        monitor.position().x + monitor.size().width as i32 - (position.x + size.width as i32);
+    let bottom =
+        monitor.position().y + monitor.size().height as i32 - (position.y + size.height as i32);
+
+    Ok(MonitorPlacement {
+        right_margin: right as f64 / scale,
+        bottom_margin: bottom as f64 / scale,
+    })
+}
+
+fn apply(
+    window: &WebviewWindow,
+    monitor: &Monitor,
+    placement: MonitorPlacement,
+) -> tauri::Result<()> {
+    let size = window.outer_size()?;
+    let scale = monitor.scale_factor();
+    let x = monitor.position().x + monitor.size().width as i32
+        - size.width as i32
+        - (placement.right_margin * scale) as i32;
+    let y = monitor.position().y + monitor.size().height as i32
+        - size.height as i32
+        - (placement.bottom_margin * scale) as i32;
+
+    window.set_position(PhysicalPosition::new(x, y))
+}
+
+/// Choisit l'écran : le dernier utilisé s'il est toujours là, sinon le secondaire,
+/// sinon le principal.
+fn choose_monitor(
+    window: &WebviewWindow,
+    prefs: &WindowPreferences,
+) -> tauri::Result<Option<Monitor>> {
+    let primary = window.primary_monitor()?;
+    let monitors = window.available_monitors()?;
+
+    let last_used = prefs
+        .last_monitor
+        .as_ref()
+        .and_then(|key| monitors.iter().find(|m| monitor_key(m) == *key));
+    let secondary = monitors.iter().find(|m| is_secondary(primary.as_ref(), m));
+
+    Ok(last_used
+        .or(secondary)
+        .or(primary.as_ref())
+        .or(monitors.first())
+        .cloned())
+}
+
+/// Place la fenêtre à sa position sauvegardée pour l'écran choisi, ou à sa position par défaut.
+pub fn place_on_preferred_monitor(
+    window: &WebviewWindow,
+    prefs: &WindowPreferences,
+) -> tauri::Result<()> {
+    let Some(monitor) = choose_monitor(window, prefs)? else {
+        return Ok(());
+    };
+
+    let placement = match prefs.monitors.get(&monitor_key(&monitor)) {
+        Some(saved) => *saved,
+        None => default_placement(window, &monitor)?,
+    };
+    apply(window, &monitor, placement)
 }

@@ -1,6 +1,26 @@
 mod constants;
+mod persistence;
 mod placement;
+mod preferences;
 mod topmost;
 
-pub use placement::place_on_preferred_monitor;
+use std::path::PathBuf;
+
+use tauri::WebviewWindow;
+
 pub use topmost::keep_on_top;
+
+/// Chemin du fichier de préférences dans le dossier de config de l'appli.
+pub fn preferences_path(config_dir: PathBuf) -> PathBuf {
+    config_dir.join(constants::PREFERENCES_FILE)
+}
+
+/// Place la fenêtre selon les préférences sauvegardées, puis sauvegarde ses déplacements.
+pub fn init_placement(window: WebviewWindow, preferences_path: PathBuf) {
+    let prefs = preferences::WindowPreferences::load(&preferences_path);
+
+    if let Err(e) = placement::place_on_preferred_monitor(&window, &prefs) {
+        eprintln!("placement de la fenêtre échoué : {e}");
+    }
+    persistence::track_moves(window, preferences_path, prefs);
+}
