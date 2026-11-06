@@ -4,8 +4,15 @@ mod window;
 use tauri::Manager;
 
 #[tauri::command]
-async fn current_track() -> Result<Option<media::models::TrackInfo>, String> {
-    media::smtc::get_current_track().map_err(|e| e.to_string())
+async fn current_track(
+    state: tauri::State<'_, media::MediaState>,
+) -> Result<Option<media::models::TrackInfo>, String> {
+    media::get_current_track(state.selected().as_deref()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn next_session(state: tauri::State<'_, media::MediaState>) {
+    state.request_next_session();
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,11 +27,11 @@ pub fn run() {
             }
             window::keep_on_top(main_window);
 
-            media::smtc::start_listening(app.handle().clone());
+            media::start_listening(app.handle().clone());
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![current_track])
+        .invoke_handler(tauri::generate_handler![current_track, next_session])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

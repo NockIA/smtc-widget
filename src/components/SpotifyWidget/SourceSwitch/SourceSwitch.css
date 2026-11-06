@@ -1,0 +1,19 @@
+.source-switch {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    border: none;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+    cursor: pointer;
+}
+
+.source-switch:hover {
+    background: rgba(255, 255, 255, 0.25);
+}

@@ -1,6 +1,7 @@
 import { TrackInfo } from "../../types/track.types";
 import { useProgress } from "../../hooks/useProgress";
 import TrackProgress from "./TrackProgress/TrackProgress";
+import SourceSwitch from "./SourceSwitch/SourceSwitch";
 import "./SpotifyWidget.css";
 
 interface SpotifyWidgetProps {
@@ -27,6 +28,7 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
   return (
     <div className="spotify-widget">
       {content}
+      {track !== null && track.sessionCount > 1 && <SourceSwitch />}
       {progress !== null && <TrackProgress progress={progress} />}
     </div>
   );
