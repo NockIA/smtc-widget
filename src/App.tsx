@@ -3,26 +3,29 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
 import SpotifyWidget from "./components/SpotifyWidget/SpotifyWidget";
-import { TrackInfo } from "./types/track.types";
+import { TrackInfo, TrackState } from "./types/track.types";
 
 const App = () => {
-  const [track, setTrack] = useState<TrackInfo | null>(null);
+  const [state, setState] = useState<TrackState>({
+    track: null,
+    receivedAt: performance.now(),
+  });
 
   useEffect(() => {
-    invoke<TrackInfo | null>("current_track")
-      .then(setTrack)
-      .catch(console.error);
+    const update = (track: TrackInfo | null) =>
+      setState({ track, receivedAt: performance.now() });
 
-    const unlisten = listen<TrackInfo | null>("media-changed", (event) => {
-      console.log("media-changed", event.payload);
-      setTrack(event.payload);
-    });
+    invoke<TrackInfo | null>("current_track").then(update).catch(console.error);
+
+    const unlisten = listen<TrackInfo | null>("media-changed", (event) =>
+      update(event.payload),
+    );
     return () => {
       unlisten.then((fn) => fn());
     };
   }, []);
 
-  return <SpotifyWidget track={track} />;
+  return <SpotifyWidget track={state.track} receivedAt={state.receivedAt} />;
 };
 
 export default App;

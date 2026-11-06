@@ -6,4 +6,9 @@ pub struct TrackInfo {
     pub title: String,
     pub artist: String,
     pub album: String,
+    /// Position estimée au moment de la lecture (en ms).
+    pub position_ms: u64,
+    /// Durée du morceau (en ms), 0 si inconnue.
+    pub duration_ms: u64,
+    pub is_playing: bool,
 }

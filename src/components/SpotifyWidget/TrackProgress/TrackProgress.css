@@ -1,0 +1,14 @@
+.progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--orange);
+    transition: width 0.25s linear;
+}
