@@ -3,6 +3,11 @@ mod window;
 
 use tauri::Manager;
 
+#[tauri::command]
+async fn current_track() -> Result<Option<media::models::TrackInfo>, String> {
+    media::smtc::get_current_track().map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -12,13 +17,11 @@ pub fn run() {
                 .expect("fenêtre 'main' introuvable");
             window::keep_on_top(main_window);
 
-            // Test temporaire : lit le morceau en cours une fois, hors du thread principal.
-            std::thread::spawn(|| {
-                println!("{:?}", media::smtc::get_current_track());
-            });
+            media::smtc::start_listening(app.handle().clone());
 
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![current_track])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -1,4 +1,5 @@
 @import "./_reset.css";
+@import "./_colors.css";
 
 :root {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
@@ -11,5 +12,14 @@
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
 
-    background-color: red;
+    color: var(--white);
+}
+
+html,
+body,
+#root {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
 }
