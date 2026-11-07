@@ -1,3 +1,4 @@
+mod artwork;
 mod constants;
 mod controls;
 mod listener;
@@ -9,6 +10,7 @@ mod timeline;
 mod track;
 mod volume;
 
+pub use artwork::get_album_art;
 pub use controls::{MediaAction, send_action};
 pub use listener::start_listening;
 pub use sources::list_sources;

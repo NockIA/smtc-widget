@@ -8,6 +8,7 @@ import MarqueeText from "./MarqueeText/MarqueeText";
 import VolumeControl from "./VolumeControl/VolumeControl";
 import { useVolume } from "../../hooks/useVolume";
 import { useHoverPanel } from "../../hooks/useHoverPanel";
+import { useAlbumArt } from "../../hooks/useAlbumArt";
 import "./SpotifyWidget.css";
 
 interface SpotifyWidgetProps {
@@ -19,6 +20,7 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
   const progress = useProgress(track, receivedAt);
   const { volume, setVolume, refresh } = useVolume(track?.source);
   const panels = useHoverPanel(3000);
+  const albumArt = useAlbumArt(track, receivedAt);
 
   return (
     <div
@@ -37,17 +39,20 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
         <DragHandle />
       </div>
       <div className={`widget-content${panels.visible ? " shifted" : ""}`}>
-        {track === null ? (
-          <p className="track-title">Aucun morceau détecté</p>
-        ) : (
-          <>
-            <MarqueeText className="track-title" text={track.title} />
-            <MarqueeText
-              className="track-footer"
-              text={[track.artist, track.album].filter(Boolean).join(" - ")}
-            />
-          </>
-        )}
+        {albumArt && <img className="album-art" src={albumArt} alt="" />}
+        <div className="track-text">
+          {track === null ? (
+            <p className="track-title">Aucun morceau détecté</p>
+          ) : (
+            <>
+              <MarqueeText className="track-title" text={track.title} />
+              <MarqueeText
+                className="track-footer"
+                text={[track.artist, track.album].filter(Boolean).join(" - ")}
+              />
+            </>
+          )}
+        </div>
       </div>
       {track !== null && (
         <div className={`widget-actions${panels.visible ? " visible" : ""}`}>

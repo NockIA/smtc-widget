@@ -17,6 +17,11 @@ async fn current_track(
 }
 
 #[tauri::command]
+async fn album_art(state: tauri::State<'_, media::MediaState>) -> Result<Option<String>, String> {
+    media::get_album_art(state.selected().as_deref()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn media_control(
     state: tauri::State<'_, media::MediaState>,
     action: media::MediaAction,
@@ -69,6 +74,7 @@ pub fn run() {
         .on_menu_event(context_menu::handle_menu_event)
         .invoke_handler(tauri::generate_handler![
             current_track,
+            album_art,
             media_control,
             get_volume,
             set_volume,

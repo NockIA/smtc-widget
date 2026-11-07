@@ -15,6 +15,9 @@
 }
 
 .widget-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     min-width: 0;
     max-width: 100%;
     margin-left: 0;
@@ -23,6 +26,18 @@
 
 .widget-content.shifted {
     margin-left: 14px;
+}
+
+.track-text {
+    min-width: 0;
+}
+
+.album-art {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    object-fit: cover;
 }
 
 .track-title {
