@@ -1,9 +1,10 @@
 use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 
 use super::constants::{
-    DEFAULT_BOTTOM_MARGIN, PRIMARY_SCREEN_RIGHT_MARGIN, SECONDARY_SCREEN_RIGHT_MARGIN,
+    DEFAULT_BOTTOM_MARGIN, PRIMARY_SCREEN_RIGHT_MARGIN, SECONDARY_SCREEN_RIGHT_MARGIN, TASKBAR_GAP,
 };
 use super::models::MonitorEntry;
+use super::taskbar_layout::right_cluster_left;
 use crate::features::preferences::{MonitorPlacement, Preferences};
 
 /// Identifiant d'un écran pour les préférences : nom + résolution.
@@ -20,15 +21,23 @@ fn is_secondary(primary: Option<&Monitor>, monitor: &Monitor) -> bool {
     primary.is_none_or(|p| monitor.position() != p.position())
 }
 
+/// Position par défaut : juste à gauche de ce qui occupe la droite de la barre des tâches
+/// (météo, zone de notification, horloge), sinon les marges fixes.
 pub fn default_placement(
     window: &WebviewWindow,
     monitor: &Monitor,
 ) -> tauri::Result<MonitorPlacement> {
-    let primary = window.primary_monitor()?;
-    let right_margin = if is_secondary(primary.as_ref(), monitor) {
-        SECONDARY_SCREEN_RIGHT_MARGIN
-    } else {
-        PRIMARY_SCREEN_RIGHT_MARGIN
+    let monitor_right = monitor.position().x + monitor.size().width as i32;
+    let right_margin = match right_cluster_left(monitor) {
+        Some(left) => (monitor_right - left) as f64 / monitor.scale_factor() + TASKBAR_GAP,
+        None => {
+            let primary = window.primary_monitor()?;
+            if is_secondary(primary.as_ref(), monitor) {
+                SECONDARY_SCREEN_RIGHT_MARGIN
+            } else {
+                PRIMARY_SCREEN_RIGHT_MARGIN
+            }
+        }
     };
     Ok(MonitorPlacement {
         right_margin,

@@ -3,6 +3,7 @@ mod layout;
 mod models;
 mod persistence;
 mod placement;
+mod taskbar_layout;
 mod topmost;
 mod webview_memory;
 

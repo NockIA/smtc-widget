@@ -1,9 +1,14 @@
 use std::time::Duration;
 
+/// Marges de repli (pixels logiques) quand la barre des tâches n'est pas lisible.
 pub const SECONDARY_SCREEN_RIGHT_MARGIN: f64 = 75.0;
-
-/// Évite de recouvrir la zone de notification.
 pub const PRIMARY_SCREEN_RIGHT_MARGIN: f64 = 210.0;
+
+/// Espace (pixels logiques) laissé entre le widget et les éléments de droite de la barre.
+pub const TASKBAR_GAP: f64 = 8.0;
+
+/// Marge vide (pixels logiques) entre le bord gauche de la fenêtre météo et son icône.
+pub const WEATHER_INNER_PADDING: f64 = 12.0;
 
 pub const DEFAULT_BOTTOM_MARGIN: f64 = 0.0;
 
