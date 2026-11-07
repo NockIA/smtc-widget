@@ -1,12 +1,13 @@
 mod constants;
 mod layout;
+mod models;
 mod persistence;
 mod placement;
 mod topmost;
 
 use tauri::{Manager, WebviewWindow};
 
-use crate::preferences::PreferencesStore;
+use crate::features::preferences::PreferencesStore;
 
 pub use placement::list_monitors;
 pub use topmost::{keep_on_top, pause_keep_on_top};

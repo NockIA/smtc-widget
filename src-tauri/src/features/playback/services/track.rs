@@ -1,8 +1,8 @@
 use windows::Media::Control::GlobalSystemMediaTransportControlsSessionPlaybackStatus;
 
-use super::models::TrackInfo;
-use super::session::{resolve_session, smtc_manager, source_id};
 use super::timeline::Timeline;
+use crate::features::playback::models::TrackInfo;
+use crate::shared::smtc::{resolve_session, smtc_manager, source_id};
 
 pub fn get_current_track(selected: Option<&str>) -> windows::core::Result<Option<TrackInfo>> {
     let manager = smtc_manager()?;

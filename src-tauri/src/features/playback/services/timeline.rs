@@ -1,7 +1,9 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use super::constants::{NANOS_PER_TICK, TICKS_PER_MS, WINDOWS_TO_UNIX_EPOCH_TICKS};
-use super::session::Session;
+use crate::features::playback::constants::{
+    NANOS_PER_TICK, TICKS_PER_MS, WINDOWS_TO_UNIX_EPOCH_TICKS,
+};
+use crate::shared::smtc::Session;
 
 pub struct Timeline {
     pub position_ms: u64,

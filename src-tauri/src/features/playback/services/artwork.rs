@@ -7,7 +7,7 @@ use image::imageops::FilterType;
 use image::{DynamicImage, ImageFormat};
 use windows::Storage::Streams::DataReader;
 
-use super::session::{resolve_session, smtc_manager, source_id};
+use crate::shared::smtc::{resolve_session, smtc_manager, source_id};
 
 const DEFAULT_MIME: &str = "image/jpeg";
 
@@ -48,10 +48,10 @@ pub fn get_album_art(selected: Option<&str>) -> windows::core::Result<Option<Str
         props.AlbumTitle()?
     );
 
-    if let Some((cached_key, art)) = CACHE.lock().unwrap().as_ref() {
-        if *cached_key == key {
-            return Ok(Some(art.clone()));
-        }
+    if let Some((cached_key, art)) = CACHE.lock().unwrap().as_ref()
+        && *cached_key == key
+    {
+        return Ok(Some(art.clone()));
     }
 
     let Ok(thumbnail) = props.Thumbnail() else {

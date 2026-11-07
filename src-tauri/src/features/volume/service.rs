@@ -11,12 +11,8 @@ use windows::Win32::System::Threading::{
 };
 use windows::core::{Interface, PWSTR};
 
-use super::session::{resolve_session, smtc_manager, source_id};
-
-/// Évite les faux positifs avec des noms d'exécutable très courts.
-const MIN_EXE_STEM_LEN: usize = 3;
-
-const PATH_BUFFER_LEN: usize = 260;
+use super::constants::{MIN_EXE_STEM_LEN, PATH_BUFFER_LEN};
+use crate::shared::smtc::{resolve_session, smtc_manager, source_id};
 
 struct ComGuard(bool);
 

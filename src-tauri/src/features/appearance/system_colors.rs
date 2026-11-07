@@ -1,30 +1,15 @@
 use std::thread;
-use std::time::Duration;
 
-use serde::Serialize;
 use tauri::{Emitter, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow};
 use windows::UI::ViewManagement::{UIColorType, UISettings};
 use windows::Win32::Graphics::Gdi::{CLR_INVALID, GetDC, GetPixel, ReleaseDC};
 
-const SYSTEM_COLORS_EVENT: &str = "system-colors";
-const POLL_INTERVAL: Duration = Duration::from_secs(3);
-
-const SAMPLE_COUNT: i32 = 48;
-const MIN_SAMPLES: usize = 3;
-/// Distance minimale entre un point d'échantillonnage et le widget, qui recouvre la barre.
-const WINDOW_MARGIN_PX: i32 = 8;
-/// Les points sont pris sur une ligne proche du bord de la barre, là où il y a le moins d'icônes.
-const ROW_OFFSET_PX: i32 = 3;
+use super::constants::{
+    MIN_SAMPLES, POLL_INTERVAL, ROW_OFFSET_PX, SAMPLE_COUNT, SYSTEM_COLORS_EVENT, WINDOW_MARGIN_PX,
+};
+use super::models::SystemColors;
 
 type Rgb = [u8; 3];
-
-/// Couleurs de Windows (`#rrggbb`), `None` quand elles ne peuvent pas être lues.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SystemColors {
-    pub taskbar: Option<String>,
-    pub accent: Option<String>,
-}
 
 fn hex([r, g, b]: Rgb) -> String {
     format!("#{r:02x}{g:02x}{b:02x}")
@@ -116,7 +101,7 @@ fn accent_color() -> Option<String> {
     Some(hex([color.R, color.G, color.B]))
 }
 
-fn system_colors(window: &WebviewWindow) -> tauri::Result<SystemColors> {
+pub(super) fn read_system_colors(window: &WebviewWindow) -> tauri::Result<SystemColors> {
     Ok(SystemColors {
         taskbar: taskbar_color(window)?,
         accent: accent_color(),
@@ -128,7 +113,7 @@ pub fn watch(window: WebviewWindow) {
     thread::spawn(move || {
         let mut last: Option<SystemColors> = None;
         loop {
-            match system_colors(&window) {
+            match read_system_colors(&window) {
                 Ok(colors) if last.as_ref() != Some(&colors) => {
                     if let Err(e) = window.emit(SYSTEM_COLORS_EVENT, &colors) {
                         eprintln!("emit {SYSTEM_COLORS_EVENT} a échoué : {e}");
@@ -141,9 +126,4 @@ pub fn watch(window: WebviewWindow) {
             thread::sleep(POLL_INTERVAL);
         }
     });
-}
-
-#[tauri::command]
-pub async fn get_system_colors(window: WebviewWindow) -> Result<SystemColors, String> {
-    system_colors(&window).map_err(|e| e.to_string())
 }

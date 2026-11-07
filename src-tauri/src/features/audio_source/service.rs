@@ -1,10 +1,5 @@
-use super::session::{all_sessions, resolve_session, smtc_manager, source_id};
-
-pub struct SourceEntry {
-    pub id: String,
-    pub label: String,
-    pub active: bool,
-}
+use super::models::SourceEntry;
+use crate::shared::smtc::{all_sessions, resolve_session, smtc_manager, source_id};
 
 /// "Spotify.exe" -> "Spotify" ; "SpotifyAB.SpotifyMusic_xxx!Spotify" -> "Spotify".
 fn label(id: &str) -> String {

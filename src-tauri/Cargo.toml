@@ -19,6 +19,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 base64 = "0.22"
+thiserror = "2"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 tauri = { version = "2", features = [] }
 tauri-plugin-single-instance = "2"

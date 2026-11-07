@@ -3,7 +3,8 @@ use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 use super::constants::{
     DEFAULT_BOTTOM_MARGIN, PRIMARY_SCREEN_RIGHT_MARGIN, SECONDARY_SCREEN_RIGHT_MARGIN,
 };
-use crate::preferences::{MonitorPlacement, Preferences};
+use super::models::MonitorEntry;
+use crate::features::preferences::{MonitorPlacement, Preferences};
 
 /// Identifiant d'un écran pour les préférences : nom + résolution.
 pub fn monitor_key(monitor: &Monitor) -> String {
@@ -101,12 +102,6 @@ pub fn place_on_preferred_monitor(
         None => default_placement(window, &monitor)?,
     };
     apply(window, &monitor, placement)
-}
-
-pub struct MonitorEntry {
-    pub key: String,
-    pub label: String,
-    pub current: bool,
 }
 
 pub fn list_monitors(window: &WebviewWindow) -> tauri::Result<Vec<MonitorEntry>> {

@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::sync::mpsc;
 use std::thread;
 
@@ -7,10 +6,11 @@ use tauri::{Manager, WebviewWindow, WindowEvent};
 use super::constants::SAVE_DEBOUNCE;
 use super::layout;
 use super::placement::{current_placement, default_placement, monitor_key};
-use crate::preferences::PreferencesStore;
+use crate::features::preferences::PreferencesStore;
+use crate::shared::error::AppResult;
 
 /// Une position identique à celle par défaut supprime la préférence de l'écran.
-fn save_current_position(window: &WebviewWindow) -> Result<(), Box<dyn Error>> {
+fn save_current_position(window: &WebviewWindow) -> AppResult<()> {
     if !layout::is_stable(window)? {
         return Ok(());
     }

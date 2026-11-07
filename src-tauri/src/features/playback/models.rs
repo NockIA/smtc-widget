@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -12,4 +12,12 @@ pub struct TrackInfo {
     pub duration_ms: u64,
     pub is_playing: bool,
     pub source: String,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MediaAction {
+    TogglePlayPause,
+    Previous,
+    Next,
 }

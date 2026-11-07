@@ -4,9 +4,9 @@ use tauri::{AppHandle, Emitter, Manager};
 use windows::Foundation::TypedEventHandler;
 
 use super::constants::MEDIA_CHANGED_EVENT;
-use super::session::{Session, SmtcManager, resolve_session, smtc_manager};
-use super::state::MediaState;
-use super::track::get_current_track;
+use super::services::get_current_track;
+use crate::features::audio_source::AudioSourceState;
+use crate::shared::smtc::{Session, SmtcManager, resolve_session, smtc_manager};
 
 macro_rules! emit_on_event {
     ($app:expr) => {{
@@ -55,7 +55,7 @@ impl SessionSubscription {
 }
 
 fn emit_current_track(app: &AppHandle) {
-    let selected = app.state::<MediaState>().selected();
+    let selected = app.state::<AudioSourceState>().selected();
     match get_current_track(selected.as_deref()) {
         Ok(track) => {
             if let Err(e) = app.emit(MEDIA_CHANGED_EVENT, track) {
@@ -75,7 +75,7 @@ fn resubscribe(
         old.cancel();
     }
 
-    let selected = app.state::<MediaState>().selected();
+    let selected = app.state::<AudioSourceState>().selected();
     if let Some(session) = resolve_session(manager, selected.as_deref()) {
         *subscription = Some(SessionSubscription::new(session, app)?);
     }
@@ -105,7 +105,7 @@ fn run_listener(app: AppHandle, rx: Receiver<()>, tx: Sender<()>) -> windows::co
 pub fn start_listening(app: AppHandle) {
     let (tx, rx) = mpsc::channel();
     // Géré avant le thread pour que les commandes puissent déjà l'utiliser.
-    app.manage(MediaState::new(tx.clone()));
+    app.manage(AudioSourceState::new(tx.clone()));
 
     std::thread::spawn(move || {
         if let Err(e) = run_listener(app, rx, tx) {

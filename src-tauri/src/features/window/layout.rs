@@ -6,7 +6,7 @@ use tauri::{Manager, WebviewWindow};
 
 use super::constants::{LAYOUT_POLL_INTERVAL, LAYOUT_SETTLE};
 use super::placement::{monitors_signature, place_on_preferred_monitor};
-use crate::preferences::PreferencesStore;
+use crate::features::preferences::PreferencesStore;
 
 static KNOWN_SIGNATURE: Mutex<String> = Mutex::new(String::new());
 static SETTLING_UNTIL: Mutex<Option<Instant>> = Mutex::new(None);

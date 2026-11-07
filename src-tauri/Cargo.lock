@@ -3209,6 +3209,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-single-instance",
+ "thiserror 2.0.21",
  "windows",
 ]
 

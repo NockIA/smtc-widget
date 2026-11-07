@@ -1,14 +1,5 @@
-use serde::Deserialize;
-
-use super::session::{resolve_session, smtc_manager};
-
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum MediaAction {
-    TogglePlayPause,
-    Previous,
-    Next,
-}
+use crate::features::playback::models::MediaAction;
+use crate::shared::smtc::{resolve_session, smtc_manager};
 
 /// `false` si aucune session n'existe ou si la source ne supporte pas l'action.
 pub fn send_action(selected: Option<&str>, action: MediaAction) -> windows::core::Result<bool> {
