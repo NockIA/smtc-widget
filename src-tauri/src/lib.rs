@@ -1,6 +1,7 @@
 mod context_menu;
 mod media;
 mod preferences;
+mod system_colors;
 mod theme;
 mod window;
 
@@ -58,6 +59,7 @@ pub fn run() {
             }
 
             window::init_placement(main_window.clone());
+            system_colors::watch(main_window.clone());
             window::keep_on_top(main_window);
 
             media::start_listening(app.handle().clone());
@@ -70,6 +72,7 @@ pub fn run() {
             media_control,
             get_volume,
             set_volume,
+            system_colors::get_system_colors,
             context_menu::show_context_menu
         ])
         .run(tauri::generate_context!())

@@ -4,8 +4,11 @@ import { listen } from "@tauri-apps/api/event";
 
 import SpotifyWidget from "./components/SpotifyWidget/SpotifyWidget";
 import { TrackInfo, TrackState } from "./types/track.types";
+import { useSystemColors } from "./hooks/useSystemColors";
 
 const App = () => {
+  useSystemColors();
+
   const [state, setState] = useState<TrackState>({
     track: null,
     receivedAt: performance.now(),
