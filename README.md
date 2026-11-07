@@ -25,12 +25,13 @@ La première compilation Rust est longue (plusieurs minutes). Un changement de `
 
 ## Commandes utiles
 
-| Commande              | Rôle                                                                |
-| --------------------- | ------------------------------------------------------------------- |
-| `npm run tauri dev`   | Lance l'app en mode développement                                   |
-| `npm run tauri build` | Produit l'exécutable et l'installateur (`src-tauri/target/release`) |
-| `npm run dev`         | Lance seulement le front dans le navigateur (sans Tauri)            |
-| `npm run build`       | Vérifie les types et construit le front                             |
+| Commande                             | Rôle                                                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `npm run tauri dev`                  | Lance l'app en mode développement                                                                                |
+| `npm run tauri build`                | Exécutable (`src-tauri/target/release/spotify-widget.exe`) et installateurs (`src-tauri/target/release/bundle/`) |
+| `npm run tauri build -- --no-bundle` | Exécutable seul, sans installateur : plus rapide (mesures, tests en release)                                     |
+| `npm run dev`                        | Lance seulement le front dans le navigateur (sans Tauri)                                                         |
+| `npm run build`                      | Vérifie les types et construit le front                                                                          |
 
 Côté Rust, depuis `src-tauri/` :
 
