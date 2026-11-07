@@ -1,11 +1,12 @@
 mod context_menu;
 mod media;
-mod settings;
+mod preferences;
+mod theme;
 mod window;
 
 use tauri::Manager;
 
-use settings::{SETTINGS_FILE, SettingsState};
+use preferences::PreferencesStore;
 
 #[tauri::command]
 async fn current_track(
@@ -39,20 +40,24 @@ async fn set_volume(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+            }
+        }))
         .setup(|app| {
-            let config_dir = app.path().app_config_dir()?;
+            app.manage(PreferencesStore::load(&app.path().app_config_dir()?));
 
             let main_window = app
                 .get_webview_window("main")
                 .expect("fenêtre 'main' introuvable");
 
-            let settings = SettingsState::load(config_dir.join(SETTINGS_FILE));
-            if let Err(e) = settings::apply_theme(&main_window, settings.theme()) {
+            let theme = app.state::<PreferencesStore>().snapshot().theme;
+            if let Err(e) = theme::apply_theme(&main_window, theme) {
                 eprintln!("application du thème échouée : {e}");
             }
-            app.manage(settings);
 
-            window::init_placement(main_window.clone(), window::preferences_path(config_dir));
+            window::init_placement(main_window.clone());
             window::keep_on_top(main_window);
 
             media::start_listening(app.handle().clone());

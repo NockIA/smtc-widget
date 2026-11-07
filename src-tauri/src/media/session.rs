@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use windows::Media::Control::{
     GlobalSystemMediaTransportControlsSession, GlobalSystemMediaTransportControlsSessionManager,
 };
@@ -5,8 +7,15 @@ use windows::Media::Control::{
 pub type Session = GlobalSystemMediaTransportControlsSession;
 pub type SmtcManager = GlobalSystemMediaTransportControlsSessionManager;
 
-pub fn request_manager() -> windows::core::Result<SmtcManager> {
-    SmtcManager::RequestAsync()?.join()
+static MANAGER: OnceLock<SmtcManager> = OnceLock::new();
+
+/// Manager SMTC partagé : créé au premier appel, puis réutilisé.
+pub fn smtc_manager() -> windows::core::Result<SmtcManager> {
+    if let Some(manager) = MANAGER.get() {
+        return Ok(manager.clone());
+    }
+    let manager = SmtcManager::RequestAsync()?.join()?;
+    Ok(MANAGER.get_or_init(|| manager).clone())
 }
 
 pub fn source_id(session: &Session) -> String {

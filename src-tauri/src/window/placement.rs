@@ -3,7 +3,7 @@ use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 use super::constants::{
     DEFAULT_BOTTOM_MARGIN, PRIMARY_SCREEN_RIGHT_MARGIN, SECONDARY_SCREEN_RIGHT_MARGIN,
 };
-use super::preferences::{MonitorPlacement, WindowPreferences};
+use crate::preferences::{MonitorPlacement, Preferences};
 
 /// Identifiant d'un écran pour les préférences : nom + résolution.
 pub fn monitor_key(monitor: &Monitor) -> String {
@@ -71,10 +71,7 @@ fn apply(
     window.set_position(PhysicalPosition::new(x, y))
 }
 
-fn choose_monitor(
-    window: &WebviewWindow,
-    prefs: &WindowPreferences,
-) -> tauri::Result<Option<Monitor>> {
+fn choose_monitor(window: &WebviewWindow, prefs: &Preferences) -> tauri::Result<Option<Monitor>> {
     let primary = window.primary_monitor()?;
     let monitors = window.available_monitors()?;
 
@@ -93,7 +90,7 @@ fn choose_monitor(
 
 pub fn place_on_preferred_monitor(
     window: &WebviewWindow,
-    prefs: &WindowPreferences,
+    prefs: &Preferences,
 ) -> tauri::Result<()> {
     let Some(monitor) = choose_monitor(window, prefs)? else {
         return Ok(());
@@ -145,7 +142,7 @@ pub fn list_monitors(window: &WebviewWindow) -> tauri::Result<Vec<MonitorEntry>>
 /// Déplace la fenêtre sur l'écran `key`, à sa position sauvegardée ou par défaut.
 pub fn move_to_monitor(
     window: &WebviewWindow,
-    prefs: &WindowPreferences,
+    prefs: &Preferences,
     key: &str,
 ) -> tauri::Result<()> {
     let monitors = window.available_monitors()?;
@@ -158,4 +155,15 @@ pub fn move_to_monitor(
         None => default_placement(window, monitor)?,
     };
     apply(window, monitor, placement)
+}
+
+/// Empreinte de la disposition des écrans (noms, tailles, positions), pour détecter un changement.
+pub fn monitors_signature(window: &WebviewWindow) -> tauri::Result<String> {
+    let mut parts: Vec<String> = window
+        .available_monitors()?
+        .iter()
+        .map(|m| format!("{}@{},{}", monitor_key(m), m.position().x, m.position().y))
+        .collect();
+    parts.sort();
+    Ok(parts.join("|"))
 }

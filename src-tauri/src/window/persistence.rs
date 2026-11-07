@@ -1,20 +1,19 @@
 use std::error::Error;
-use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::thread;
 
-use tauri::{WebviewWindow, WindowEvent};
+use tauri::{Manager, WebviewWindow, WindowEvent};
 
 use super::constants::SAVE_DEBOUNCE;
+use super::layout;
 use super::placement::{current_placement, default_placement, monitor_key};
-use super::preferences::WindowPreferences;
+use crate::preferences::PreferencesStore;
 
 /// Une position identique à celle par défaut supprime la préférence de l'écran.
-fn save_current_position(
-    window: &WebviewWindow,
-    path: &Path,
-    prefs: &mut WindowPreferences,
-) -> Result<(), Box<dyn Error>> {
+fn save_current_position(window: &WebviewWindow) -> Result<(), Box<dyn Error>> {
+    if !layout::is_stable(window)? {
+        return Ok(());
+    }
     let Some(monitor) = window.current_monitor()? else {
         return Ok(());
     };
@@ -22,17 +21,18 @@ fn save_current_position(
     let current = current_placement(window, &monitor)?;
     let default = default_placement(window, &monitor)?;
 
-    prefs.last_monitor = Some(key.clone());
-    if current.is_close_to(&default) {
-        prefs.monitors.remove(&key);
-    } else {
-        prefs.monitors.insert(key, current);
-    }
-    prefs.save(path)?;
+    window.state::<PreferencesStore>().update(|prefs| {
+        prefs.last_monitor = Some(key.clone());
+        if current.is_close_to(&default) {
+            prefs.monitors.remove(&key);
+        } else {
+            prefs.monitors.insert(key, current);
+        }
+    })?;
     Ok(())
 }
 
-pub fn track_moves(window: WebviewWindow, path: PathBuf, mut prefs: WindowPreferences) {
+pub fn track_moves(window: WebviewWindow) {
     let (tx, rx) = mpsc::channel::<()>();
 
     window.on_window_event(move |event| {
@@ -45,7 +45,7 @@ pub fn track_moves(window: WebviewWindow, path: PathBuf, mut prefs: WindowPrefer
         while rx.recv().is_ok() {
             while rx.recv_timeout(SAVE_DEBOUNCE).is_ok() {}
 
-            if let Err(e) = save_current_position(&window, &path, &mut prefs) {
+            if let Err(e) = save_current_position(&window) {
                 eprintln!("sauvegarde de la position échouée : {e}");
             }
         }

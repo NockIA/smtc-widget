@@ -4,7 +4,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use windows::Foundation::TypedEventHandler;
 
 use super::constants::MEDIA_CHANGED_EVENT;
-use super::session::{Session, SmtcManager, request_manager, resolve_session};
+use super::session::{Session, SmtcManager, resolve_session, smtc_manager};
 use super::state::MediaState;
 use super::track::get_current_track;
 
@@ -82,12 +82,8 @@ fn resubscribe(
     Ok(())
 }
 
-fn run_listener(
-    app: AppHandle,
-    rx: Receiver<()>,
-    tx: Sender<()>,
-) -> windows::core::Result<()> {
-    let manager = request_manager()?;
+fn run_listener(app: AppHandle, rx: Receiver<()>, tx: Sender<()>) -> windows::core::Result<()> {
+    let manager = smtc_manager()?;
     let mut subscription = None;
 
     manager.CurrentSessionChanged(&refresh_on_event!(tx))?;

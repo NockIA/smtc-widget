@@ -1,11 +1,11 @@
 use windows::Media::Control::GlobalSystemMediaTransportControlsSessionPlaybackStatus;
 
 use super::models::TrackInfo;
-use super::session::{request_manager, resolve_session, source_id};
+use super::session::{resolve_session, smtc_manager, source_id};
 use super::timeline::Timeline;
 
 pub fn get_current_track(selected: Option<&str>) -> windows::core::Result<Option<TrackInfo>> {
-    let manager = request_manager()?;
+    let manager = smtc_manager()?;
 
     let Some(session) = resolve_session(&manager, selected) else {
         return Ok(None);

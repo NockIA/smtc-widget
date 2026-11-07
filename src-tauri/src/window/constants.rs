@@ -9,9 +9,9 @@ pub const DEFAULT_BOTTOM_MARGIN: f64 = 0.0;
 
 pub const POLL_INTERVAL: Duration = Duration::from_millis(100);
 
-pub const PREFERENCES_FILE: &str = "window-preferences.json";
-
 pub const SAVE_DEBOUNCE: Duration = Duration::from_millis(500);
 
-/// Écart (en pixels logiques) en dessous duquel deux positions sont considérées identiques.
-pub const POSITION_EPSILON: f64 = 1.0;
+pub const LAYOUT_POLL_INTERVAL: Duration = Duration::from_secs(1);
+
+/// Délai pendant lequel les déplacements sont ignorés après un changement d'écrans.
+pub const LAYOUT_SETTLE: Duration = Duration::from_secs(2);

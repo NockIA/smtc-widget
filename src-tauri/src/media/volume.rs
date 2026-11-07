@@ -11,7 +11,7 @@ use windows::Win32::System::Threading::{
 };
 use windows::core::{Interface, PWSTR};
 
-use super::session::{request_manager, resolve_session, source_id};
+use super::session::{resolve_session, smtc_manager, source_id};
 
 /// Évite les faux positifs avec des noms d'exécutable très courts.
 const MIN_EXE_STEM_LEN: usize = 3;
@@ -95,7 +95,7 @@ fn source_volumes(source: &str) -> windows::core::Result<Vec<ISimpleAudioVolume>
 }
 
 fn current_source(selected: Option<&str>) -> windows::core::Result<Option<String>> {
-    let manager = request_manager()?;
+    let manager = smtc_manager()?;
     Ok(resolve_session(&manager, selected).map(|session| source_id(&session)))
 }
 

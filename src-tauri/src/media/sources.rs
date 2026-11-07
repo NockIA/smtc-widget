@@ -1,4 +1,4 @@
-use super::session::{all_sessions, request_manager, resolve_session, source_id};
+use super::session::{all_sessions, resolve_session, smtc_manager, source_id};
 
 pub struct SourceEntry {
     pub id: String,
@@ -14,7 +14,7 @@ fn label(id: &str) -> String {
 
 /// Sources audio disponibles, sans doublon, avec celle qui est active.
 pub fn list_sources(selected: Option<&str>) -> windows::core::Result<Vec<SourceEntry>> {
-    let manager = request_manager()?;
+    let manager = smtc_manager()?;
     let active = resolve_session(&manager, selected).map(|s| source_id(&s));
 
     let mut sources: Vec<SourceEntry> = Vec::new();

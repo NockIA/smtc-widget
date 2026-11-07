@@ -4,7 +4,8 @@ use tauri::menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, 
 use tauri::{AppHandle, Manager, WebviewWindow, Wry};
 
 use crate::media::{self, MediaState};
-use crate::settings::{self, SettingsState, ThemePreference};
+use crate::preferences::PreferencesStore;
+use crate::theme::{self, ThemePreference};
 use crate::window;
 
 const QUIT_ID: &str = "quit";
@@ -40,7 +41,7 @@ fn build_menu(app: &AppHandle, window: &WebviewWindow) -> Result<Menu<Wry>, Box<
         )?)?;
     }
 
-    let current_theme = app.state::<SettingsState>().theme();
+    let current_theme = app.state::<PreferencesStore>().snapshot().theme;
     let theme_menu = Submenu::new(app, "Thème", true)?;
     for theme in ThemePreference::ALL {
         theme_menu.append(&CheckMenuItem::with_id(
@@ -82,11 +83,14 @@ pub async fn show_context_menu(
 }
 
 fn set_theme(app: &AppHandle, theme: ThemePreference) {
-    if let Err(e) = app.state::<SettingsState>().set_theme(theme) {
+    if let Err(e) = app
+        .state::<PreferencesStore>()
+        .update(|prefs| prefs.theme = theme)
+    {
         eprintln!("sauvegarde du thème échouée : {e}");
     }
     if let Some(window) = app.get_webview_window("main") {
-        if let Err(e) = settings::apply_theme(&window, theme) {
+        if let Err(e) = theme::apply_theme(&window, theme) {
             eprintln!("application du thème échouée : {e}");
         }
     }
@@ -96,15 +100,7 @@ fn move_to_monitor(app: &AppHandle, key: &str) {
     let Some(window) = app.get_webview_window("main") else {
         return;
     };
-    let result = app
-        .path()
-        .app_config_dir()
-        .map_err(|e| e.to_string())
-        .and_then(|dir| {
-            window::move_to_monitor(&window, &window::preferences_path(dir), key)
-                .map_err(|e| e.to_string())
-        });
-    if let Err(e) = result {
+    if let Err(e) = window::move_to_monitor(&window, key) {
         eprintln!("déplacement vers l'écran échoué : {e}");
     }
 }
@@ -118,7 +114,10 @@ pub fn handle_menu_event(app: &AppHandle, event: MenuEvent) {
         app.state::<MediaState>().select_source(source.to_owned());
     } else if let Some(key) = id.strip_prefix(MONITOR_PREFIX) {
         move_to_monitor(app, key);
-    } else if let Some(theme) = id.strip_prefix(THEME_PREFIX).and_then(ThemePreference::from_id) {
+    } else if let Some(theme) = id
+        .strip_prefix(THEME_PREFIX)
+        .and_then(ThemePreference::from_id)
+    {
         set_theme(app, theme);
     }
 }
