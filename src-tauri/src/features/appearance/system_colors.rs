@@ -1,15 +1,33 @@
+use std::ffi::c_void;
+use std::sync::OnceLock;
+use std::sync::mpsc::{self, RecvTimeoutError, Sender};
 use std::thread;
 
-use tauri::{Emitter, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow};
+use tauri::{Emitter, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow, WindowEvent};
+use windows::Foundation::TypedEventHandler;
 use windows::UI::ViewManagement::{UIColorType, UISettings};
-use windows::Win32::Graphics::Gdi::{CLR_INVALID, GetDC, GetPixel, ReleaseDC};
+use windows::Win32::Graphics::Gdi::{
+    BI_RGB, BITMAPINFO, BITMAPINFOHEADER, BitBlt, CreateCompatibleBitmap, CreateCompatibleDC,
+    DIB_RGB_COLORS, DeleteDC, DeleteObject, GetDC, GetDIBits, ReleaseDC, SRCCOPY, SelectObject,
+};
 
 use super::constants::{
-    MIN_SAMPLES, POLL_INTERVAL, ROW_OFFSET_PX, SAMPLE_COUNT, SYSTEM_COLORS_EVENT, WINDOW_MARGIN_PX,
+    FALLBACK_INTERVAL, MIN_SAMPLES, ROW_OFFSET_PX, SYSTEM_COLORS_EVENT, TRIGGER_DEBOUNCE,
+    WINDOW_MARGIN_PX,
 };
 use super::models::SystemColors;
+use crate::features::window;
 
 type Rgb = [u8; 3];
+
+/// Déclencheur partagé : relecture des couleurs à la demande (survol, déplacement, thème).
+static TRIGGER: OnceLock<Sender<()>> = OnceLock::new();
+
+pub fn request_refresh() {
+    if let Some(trigger) = TRIGGER.get() {
+        let _ = trigger.send(());
+    }
+}
 
 fn hex([r, g, b]: Rgb) -> String {
     format!("#{r:02x}{g:02x}{b:02x}")
@@ -28,26 +46,64 @@ fn on_taskbar(monitor: &Monitor, x: i32, y: i32) -> bool {
     inside(monitor.position(), monitor.size(), x, y) && !inside(&work.position, &work.size, x, y)
 }
 
-fn read_pixels(xs: impl Iterator<Item = i32>, y: i32) -> Vec<Rgb> {
-    let mut pixels = Vec::new();
-    unsafe {
-        let hdc = GetDC(None);
-        if hdc.is_invalid() {
-            return pixels;
-        }
-        for x in xs {
-            let color = GetPixel(hdc, x, y).0;
-            if color != CLR_INVALID {
-                pixels.push([
-                    (color & 0xFF) as u8,
-                    ((color >> 8) & 0xFF) as u8,
-                    ((color >> 16) & 0xFF) as u8,
-                ]);
-            }
-        }
-        ReleaseDC(None, hdc);
+/// Capture une ligne d'écran de 1 px de haut en une seule copie (au lieu d'un `GetPixel` par point).
+fn capture_row(left: i32, y: i32, width: i32) -> Option<Vec<Rgb>> {
+    if width <= 0 {
+        return None;
     }
-    pixels
+    unsafe {
+        let screen = GetDC(None);
+        if screen.is_invalid() {
+            return None;
+        }
+        let memory = CreateCompatibleDC(Some(screen));
+        let bitmap = CreateCompatibleBitmap(screen, width, 1);
+        let previous = SelectObject(memory, bitmap.into());
+
+        let copied = BitBlt(memory, 0, 0, width, 1, Some(screen), left, y, SRCCOPY).is_ok();
+        // `GetDIBits` demande que le bitmap ne soit plus sélectionné dans un DC.
+        SelectObject(memory, previous);
+
+        let mut info = BITMAPINFO {
+            bmiHeader: BITMAPINFOHEADER {
+                biSize: size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: width,
+                biHeight: -1,
+                biPlanes: 1,
+                biBitCount: 32,
+                biCompression: BI_RGB.0,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let mut buffer = vec![0u8; width as usize * 4];
+        let lines = GetDIBits(
+            memory,
+            bitmap,
+            0,
+            1,
+            Some(buffer.as_mut_ptr() as *mut c_void),
+            &mut info,
+            DIB_RGB_COLORS,
+        );
+
+        let _ = DeleteObject(bitmap.into());
+        let _ = DeleteDC(memory);
+        ReleaseDC(None, screen);
+
+        if !copied || lines == 0 {
+            return None;
+        }
+        // Pixels au format BGRA.
+        Some(
+            buffer
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|p| [p[2], p[1], p[0]])
+                .collect(),
+        )
+    }
 }
 
 /// Médiane par canal : insensible aux icônes (minoritaires) et au grain de l'acrylique.
@@ -75,17 +131,24 @@ fn taskbar_color(window: &WebviewWindow) -> tauri::Result<Option<String>> {
         return Ok(None);
     }
 
+    let left = monitor.position().x;
     let y = position.y + ROW_OFFSET_PX;
-    let step = (monitor.size().width as i32 / SAMPLE_COUNT).max(1);
-    let xs = (0..SAMPLE_COUNT)
-        .map(|i| monitor.position().x + i * step)
-        .filter(|&x| {
+    let Some(row) = capture_row(left, y, monitor.size().width as i32) else {
+        return Ok(None);
+    };
+
+    let pixels: Vec<Rgb> = row
+        .into_iter()
+        .enumerate()
+        .map(|(offset, pixel)| (left + offset as i32, pixel))
+        .filter(|&(x, _)| {
             x < position.x - WINDOW_MARGIN_PX
                 || x > position.x + size.width as i32 + WINDOW_MARGIN_PX
         })
-        .filter(|&x| on_taskbar(&monitor, x, y));
+        .filter(|&(x, _)| on_taskbar(&monitor, x, y))
+        .map(|(_, pixel)| pixel)
+        .collect();
 
-    let pixels = read_pixels(xs, y);
     if pixels.len() < MIN_SAMPLES {
         return Ok(None);
     }
@@ -93,37 +156,70 @@ fn taskbar_color(window: &WebviewWindow) -> tauri::Result<Option<String>> {
 }
 
 /// Couleur d'accentuation choisie dans les paramètres de Windows.
-fn accent_color() -> Option<String> {
-    let color = UISettings::new()
-        .ok()?
-        .GetColorValue(UIColorType::Accent)
-        .ok()?;
+fn accent_color(settings: &UISettings) -> Option<String> {
+    let color = settings.GetColorValue(UIColorType::Accent).ok()?;
     Some(hex([color.R, color.G, color.B]))
 }
 
-pub(super) fn read_system_colors(window: &WebviewWindow) -> tauri::Result<SystemColors> {
+fn read_with(window: &WebviewWindow, settings: Option<&UISettings>) -> tauri::Result<SystemColors> {
     Ok(SystemColors {
         taskbar: taskbar_color(window)?,
-        accent: accent_color(),
+        accent: settings.and_then(accent_color),
     })
 }
 
-/// Relit les couleurs régulièrement (fond d'écran, thème, accent) et prévient le front si elles changent.
+pub(super) fn read_system_colors(window: &WebviewWindow) -> tauri::Result<SystemColors> {
+    read_with(window, UISettings::new().ok().as_ref())
+}
+
+/// Relit les couleurs sur déclencheur (thème/accent, fin de déplacement, survol),
+/// avec un contrôle de secours lent. Rien n'est lu tant que le widget est caché.
 pub fn watch(window: WebviewWindow) {
+    let (tx, rx) = mpsc::channel::<()>();
+    let _ = TRIGGER.set(tx.clone());
+
+    let moved = tx.clone();
+    window.on_window_event(move |event| {
+        if let WindowEvent::Moved(_) = event {
+            let _ = moved.send(());
+        }
+    });
+
     thread::spawn(move || {
+        // Gardé vivant dans le thread pour conserver l'abonnement aux changements de couleurs.
+        let settings = UISettings::new().ok();
+        if let Some(settings) = &settings {
+            let changed = tx.clone();
+            let handler = TypedEventHandler::new(move |_, _| {
+                let _ = changed.send(());
+                Ok(())
+            });
+            if let Err(e) = settings.ColorValuesChanged(&handler) {
+                eprintln!("abonnement aux couleurs Windows échoué : {e}");
+            }
+        }
+
         let mut last: Option<SystemColors> = None;
         loop {
-            match read_system_colors(&window) {
-                Ok(colors) if last.as_ref() != Some(&colors) => {
-                    if let Err(e) = window.emit(SYSTEM_COLORS_EVENT, &colors) {
-                        eprintln!("emit {SYSTEM_COLORS_EVENT} a échoué : {e}");
+            if !window::is_hidden() {
+                match read_with(&window, settings.as_ref()) {
+                    Ok(colors) if last.as_ref() != Some(&colors) => {
+                        if let Err(e) = window.emit(SYSTEM_COLORS_EVENT, &colors) {
+                            eprintln!("emit {SYSTEM_COLORS_EVENT} a échoué : {e}");
+                        }
+                        last = Some(colors);
                     }
-                    last = Some(colors);
+                    Ok(_) => {}
+                    Err(e) => eprintln!("lecture des couleurs système échouée : {e}"),
                 }
-                Ok(_) => {}
-                Err(e) => eprintln!("lecture des couleurs système échouée : {e}"),
             }
-            thread::sleep(POLL_INTERVAL);
+
+            match rx.recv_timeout(FALLBACK_INTERVAL) {
+                // Regroupe les rafales (un déplacement émet beaucoup d'événements).
+                Ok(()) => while rx.recv_timeout(TRIGGER_DEBOUNCE).is_ok() {},
+                Err(RecvTimeoutError::Timeout) => {}
+                Err(RecvTimeoutError::Disconnected) => break,
+            }
         }
     });
 }

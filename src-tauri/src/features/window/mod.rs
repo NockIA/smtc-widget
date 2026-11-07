@@ -4,13 +4,14 @@ mod models;
 mod persistence;
 mod placement;
 mod topmost;
+mod webview_memory;
 
 use tauri::{Manager, WebviewWindow};
 
 use crate::features::preferences::PreferencesStore;
 
 pub use placement::list_monitors;
-pub use topmost::{keep_on_top, pause_keep_on_top};
+pub use topmost::{is_hidden, keep_on_top, pause_keep_on_top};
 
 /// Place la fenêtre selon les préférences, puis suit ses déplacements et les changements d'écrans.
 pub fn init_placement(window: WebviewWindow) {

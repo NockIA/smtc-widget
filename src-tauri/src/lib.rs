@@ -42,6 +42,7 @@ pub fn run() {
             volume::commands::get_volume,
             volume::commands::set_volume,
             appearance::commands::get_system_colors,
+            appearance::commands::refresh_system_colors,
             context_menu::commands::show_context_menu,
         ])
         .run(tauri::generate_context!())

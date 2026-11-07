@@ -14,6 +14,18 @@ pub struct TrackInfo {
     pub source: String,
 }
 
+impl TrackInfo {
+    /// Même morceau dans le même état (hors position, qui avance en continu).
+    pub fn same_state(&self, other: &Self) -> bool {
+        self.title == other.title
+            && self.artist == other.artist
+            && self.album == other.album
+            && self.source == other.source
+            && self.is_playing == other.is_playing
+            && self.duration_ms == other.duration_ms
+    }
+}
+
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum MediaAction {

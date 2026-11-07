@@ -1,6 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import { TrackInfo } from "../../types/track.types";
-import { useProgress } from "../../hooks/useProgress";
 import TrackProgress from "./TrackProgress/TrackProgress";
 import MediaControls from "./MediaControls/MediaControls";
 import DragHandle from "./DragHandle/DragHandle";
@@ -17,7 +16,6 @@ interface SpotifyWidgetProps {
 }
 
 const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
-  const progress = useProgress(track, receivedAt);
   const { volume, setVolume, refresh } = useVolume(track?.source);
   const panels = useHoverPanel(3000);
   const albumArt = useAlbumArt(track, receivedAt);
@@ -28,6 +26,7 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
       onMouseEnter={() => {
         refresh();
         panels.onMouseEnter();
+        invoke("refresh_system_colors").catch(console.error);
       }}
       onMouseLeave={panels.onMouseLeave}
       onContextMenu={(event) => {
@@ -45,8 +44,13 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
             <p className="track-title">Aucun morceau détecté</p>
           ) : (
             <>
-              <MarqueeText className="track-title" text={track.title} />
               <MarqueeText
+                className="track-title"
+                text={track.title}
+                hovered={panels.visible}
+              />
+              <MarqueeText
+                hovered={panels.visible}
                 className="track-footer"
                 text={[track.artist, track.album].filter(Boolean).join(" - ")}
               />
@@ -62,7 +66,9 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
           )}
         </div>
       )}
-      {progress !== null && <TrackProgress progress={progress} />}
+      {track !== null && track.durationMs > 0 && (
+        <TrackProgress track={track} receivedAt={receivedAt} />
+      )}
     </div>
   );
 };

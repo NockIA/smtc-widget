@@ -18,13 +18,23 @@ const App = () => {
     const update = (track: TrackInfo | null) =>
       setState({ track, receivedAt: performance.now() });
 
-    invoke<TrackInfo | null>("current_track").then(update).catch(console.error);
+    const fetchTrack = () =>
+      invoke<TrackInfo | null>("current_track").then(update).catch(console.error);
+    fetchTrack();
 
-    const unlisten = listen<TrackInfo | null>("media-changed", (event) =>
+    const unlistenTrack = listen<TrackInfo | null>("media-changed", (event) =>
       update(event.payload),
     );
+
+    // Caché par une application plein écran : animations en pause, puis recalage au retour.
+    const unlistenVisibility = listen<boolean>("widget-visibility", (event) => {
+      document.documentElement.classList.toggle("widget-hidden", event.payload);
+      if (!event.payload) fetchTrack();
+    });
+
     return () => {
-      unlisten.then((fn) => fn());
+      unlistenTrack.then((fn) => fn());
+      unlistenVisibility.then((fn) => fn());
     };
   }, []);
 

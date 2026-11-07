@@ -2,18 +2,22 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { TrackInfo } from "../types/track.types";
 
+/** Certaines sources envoient la pochette après le titre ; au-delà, on considère qu'il n'y en a pas. */
+const MAX_ATTEMPTS = 3;
+
 interface AlbumArt {
   key: string;
   url: string | null;
 }
 
-/**
- * Pochette du morceau (data URL), ou null. Certaines sources l'envoient après le titre :
- * tant qu'elle manque, on retente à chaque mise à jour du morceau.
- */
+/** Pochette du morceau (data URL), ou null. */
 export const useAlbumArt = (track: TrackInfo | null, receivedAt: number) => {
   const [art, setArt] = useState<AlbumArt | null>(null);
-  const foundFor = useRef<string | null>(null);
+  const attempts = useRef<{ key: string | null; count: number; found: boolean }>({
+    key: null,
+    count: 0,
+    found: false,
+  });
 
   const key = track
     ? [track.source, track.title, track.artist, track.album].join("|")
@@ -21,17 +25,22 @@ export const useAlbumArt = (track: TrackInfo | null, receivedAt: number) => {
 
   useEffect(() => {
     if (key === null) {
-      foundFor.current = null;
+      attempts.current = { key: null, count: 0, found: false };
       setArt(null);
       return;
     }
-    if (foundFor.current === key) return;
+    if (attempts.current.key !== key) {
+      attempts.current = { key, count: 0, found: false };
+    }
+    const current = attempts.current;
+    if (current.found || current.count >= MAX_ATTEMPTS) return;
+    current.count += 1;
 
     let cancelled = false;
     invoke<string | null>("album_art")
       .then((url) => {
         if (cancelled) return;
-        if (url) foundFor.current = key;
+        if (url) current.found = true;
         setArt({ key, url });
       })
       .catch(console.error);

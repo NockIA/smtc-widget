@@ -6,6 +6,7 @@ use tauri::{Manager, WebviewWindow};
 
 use super::constants::{LAYOUT_POLL_INTERVAL, LAYOUT_SETTLE};
 use super::placement::{monitors_signature, place_on_preferred_monitor};
+use super::topmost::is_hidden;
 use crate::features::preferences::PreferencesStore;
 
 static KNOWN_SIGNATURE: Mutex<String> = Mutex::new(String::new());
@@ -34,6 +35,9 @@ pub fn watch(window: WebviewWindow) {
     thread::spawn(move || {
         loop {
             thread::sleep(LAYOUT_POLL_INTERVAL);
+            if is_hidden() {
+                continue;
+            }
 
             let Ok(signature) = monitors_signature(&window) else {
                 continue;

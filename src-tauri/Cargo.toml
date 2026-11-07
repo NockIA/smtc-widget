@@ -20,6 +20,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 base64 = "0.22"
 thiserror = "2"
+webview2-com = "0.39"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 tauri = { version = "2", features = [] }
 tauri-plugin-single-instance = "2"
@@ -31,6 +32,7 @@ version = "0.62.2"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
+    "Win32_UI_Accessibility",
     "Win32_UI_Shell",
     "Win32_UI_WindowsAndMessaging",
     "Media_Control",

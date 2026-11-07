@@ -15,6 +15,13 @@
     color: var(--text);
 }
 
+/* Widget caché par une application plein écran : plus aucune animation. */
+.widget-hidden *,
+.widget-hidden *::before,
+.widget-hidden *::after {
+    animation-play-state: paused !important;
+}
+
 html,
 body,
 #root {

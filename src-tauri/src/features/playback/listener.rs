@@ -1,28 +1,26 @@
 use std::sync::mpsc::{self, Receiver, Sender};
 
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 use windows::Foundation::TypedEventHandler;
 
-use super::constants::MEDIA_CHANGED_EVENT;
+use super::constants::EVENT_DEBOUNCE;
+use super::emitter::TrackEmitter;
 use super::services::get_current_track;
 use crate::features::audio_source::AudioSourceState;
 use crate::shared::smtc::{Session, SmtcManager, resolve_session, smtc_manager};
 
-macro_rules! emit_on_event {
-    ($app:expr) => {{
-        let app = $app.clone();
-        TypedEventHandler::new(move |_, _| {
-            emit_current_track(&app);
-            Ok(())
-        })
-    }};
+enum ListenerEvent {
+    /// La source ou la liste des sessions a changé : se réabonner.
+    Resubscribe,
+    /// Le morceau ou son état a changé dans la session suivie.
+    TrackChanged,
 }
 
-macro_rules! refresh_on_event {
-    ($tx:expr) => {{
+macro_rules! send_on_event {
+    ($tx:expr, $event:expr) => {{
         let tx = $tx.clone();
         TypedEventHandler::new(move |_, _| {
-            let _ = tx.send(());
+            let _ = tx.send($event);
             Ok(())
         })
     }};
@@ -36,11 +34,14 @@ struct SessionSubscription {
 }
 
 impl SessionSubscription {
-    fn new(session: Session, app: &AppHandle) -> windows::core::Result<Self> {
+    fn new(session: Session, tx: &Sender<ListenerEvent>) -> windows::core::Result<Self> {
         Ok(Self {
-            media_token: session.MediaPropertiesChanged(&emit_on_event!(app))?,
-            timeline_token: session.TimelinePropertiesChanged(&emit_on_event!(app))?,
-            playback_token: session.PlaybackInfoChanged(&emit_on_event!(app))?,
+            media_token: session
+                .MediaPropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
+            timeline_token: session
+                .TimelinePropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
+            playback_token: session
+                .PlaybackInfoChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
             session,
         })
     }
@@ -54,21 +55,10 @@ impl SessionSubscription {
     }
 }
 
-fn emit_current_track(app: &AppHandle) {
-    let selected = app.state::<AudioSourceState>().selected();
-    match get_current_track(selected.as_deref()) {
-        Ok(track) => {
-            if let Err(e) = app.emit(MEDIA_CHANGED_EVENT, track) {
-                eprintln!("emit {MEDIA_CHANGED_EVENT} a échoué : {e}");
-            }
-        }
-        Err(e) => eprintln!("get_current_track a échoué : {e}"),
-    }
-}
-
 fn resubscribe(
     manager: &SmtcManager,
     app: &AppHandle,
+    tx: &Sender<ListenerEvent>,
     subscription: &mut Option<SessionSubscription>,
 ) -> windows::core::Result<()> {
     if let Some(old) = subscription.take() {
@@ -77,35 +67,57 @@ fn resubscribe(
 
     let selected = app.state::<AudioSourceState>().selected();
     if let Some(session) = resolve_session(manager, selected.as_deref()) {
-        *subscription = Some(SessionSubscription::new(session, app)?);
+        *subscription = Some(SessionSubscription::new(session, tx)?);
     }
     Ok(())
 }
 
-fn run_listener(app: AppHandle, rx: Receiver<()>, tx: Sender<()>) -> windows::core::Result<()> {
+fn publish(app: &AppHandle, emitter: &mut TrackEmitter) {
+    let selected = app.state::<AudioSourceState>().selected();
+    match get_current_track(selected.as_deref()) {
+        Ok(track) => emitter.emit_if_changed(app, track),
+        Err(e) => eprintln!("get_current_track a échoué : {e}"),
+    }
+}
+
+fn run_listener(
+    app: AppHandle,
+    rx: Receiver<ListenerEvent>,
+    tx: Sender<ListenerEvent>,
+) -> windows::core::Result<()> {
     let manager = smtc_manager()?;
     let mut subscription = None;
+    let mut emitter = TrackEmitter::default();
 
-    manager.CurrentSessionChanged(&refresh_on_event!(tx))?;
-    manager.SessionsChanged(&refresh_on_event!(tx))?;
+    manager.CurrentSessionChanged(&send_on_event!(tx, ListenerEvent::Resubscribe))?;
+    manager.SessionsChanged(&send_on_event!(tx, ListenerEvent::Resubscribe))?;
 
-    resubscribe(&manager, &app, &mut subscription)?;
-    emit_current_track(&app);
+    resubscribe(&manager, &app, &tx, &mut subscription)?;
+    publish(&app, &mut emitter);
 
     // Le thread garde manager et session en vie.
-    while rx.recv().is_ok() {
-        if let Err(e) = resubscribe(&manager, &app, &mut subscription) {
+    while let Ok(event) = rx.recv() {
+        let mut needs_resubscribe = matches!(event, ListenerEvent::Resubscribe);
+        while let Ok(next) = rx.recv_timeout(EVENT_DEBOUNCE) {
+            needs_resubscribe |= matches!(next, ListenerEvent::Resubscribe);
+        }
+
+        if needs_resubscribe && let Err(e) = resubscribe(&manager, &app, &tx, &mut subscription) {
             eprintln!("réabonnement à la session a échoué : {e}");
         }
-        emit_current_track(&app);
+        publish(&app, &mut emitter);
     }
     Ok(())
 }
 
 pub fn start_listening(app: AppHandle) {
     let (tx, rx) = mpsc::channel();
+
     // Géré avant le thread pour que les commandes puissent déjà l'utiliser.
-    app.manage(AudioSourceState::new(tx.clone()));
+    let on_source_change = tx.clone();
+    app.manage(AudioSourceState::new(move || {
+        let _ = on_source_change.send(ListenerEvent::Resubscribe);
+    }));
 
     std::thread::spawn(move || {
         if let Err(e) = run_listener(app, rx, tx) {

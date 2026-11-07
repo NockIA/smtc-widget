@@ -7,11 +7,22 @@
     display: inline-block;
 }
 
+/* Au repos, le texte coupé se termine par des points de suspension. */
+.marquee.idle {
+    text-overflow: ellipsis;
+}
+
+.marquee.idle .marquee-track,
+.marquee.idle .marquee-item {
+    display: inline;
+}
+
 .marquee-track.scrolling .marquee-item {
     margin-right: var(--marquee-gap);
 }
 
 .marquee-track.scrolling {
+    will-change: transform;
     animation: marquee var(--marquee-duration) linear infinite;
 }
 
