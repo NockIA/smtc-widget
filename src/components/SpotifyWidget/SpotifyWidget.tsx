@@ -8,6 +8,7 @@ import VolumeControl from "./VolumeControl/VolumeControl";
 import { useVolume } from "../../hooks/useVolume";
 import { useHoverPanel } from "../../hooks/useHoverPanel";
 import { useAlbumArt } from "../../hooks/useAlbumArt";
+import { useReservedWidth } from "../../hooks/useReservedWidth";
 import "./SpotifyWidget.css";
 
 interface SpotifyWidgetProps {
@@ -19,9 +20,13 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
   const { volume, setVolume, refresh } = useVolume(track?.source);
   const panels = useHoverPanel(3000);
   const albumArt = useAlbumArt(track, receivedAt);
+  const { containerRef, panelRef } = useReservedWidth(
+    panels.visible && track !== null,
+  );
 
   return (
     <div
+      ref={containerRef}
       className="spotify-widget"
       onMouseEnter={() => {
         refresh();
@@ -59,7 +64,10 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
         </div>
       </div>
       {track !== null && (
-        <div className={`widget-actions${panels.visible ? " visible" : ""}`}>
+        <div
+          ref={panelRef}
+          className={`widget-actions${panels.visible ? " visible" : ""}`}
+        >
           <MediaControls isPlaying={track.isPlaying} />
           {volume !== null && (
             <VolumeControl volume={volume} onChange={setVolume} />

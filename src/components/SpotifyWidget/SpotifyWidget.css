@@ -1,5 +1,8 @@
 .spotify-widget {
     --progress-height: 2.5px;
+    --widget-padding-x: 10px;
+    /* Zone de fondu à gauche du panneau d'actions. */
+    --actions-fade: 24px;
 
     display: flex;
     flex-direction: column;
@@ -11,21 +14,30 @@
     background: var(--bg);
     overflow: hidden;
     position: relative;
-    padding: 1px 10px;
+    padding: 1px var(--widget-padding-x);
 }
 
 .widget-content {
+    --content-left: 0px;
+    /* Le texte s'arrête où commence le fondu du panneau d'actions, au lieu de passer dessous. */
+    --content-right: max(
+        0px,
+        calc(var(--actions-width, 0px) - var(--widget-padding-x) - var(--actions-fade))
+    );
+
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
-    max-width: 100%;
-    margin-left: 0;
-    transition: margin-left 0.25s ease;
+    margin-left: var(--content-left);
+    max-width: calc(100% - var(--content-left) - var(--content-right));
+    transition:
+        margin-left 0.25s ease,
+        max-width 0.25s ease;
 }
 
 .widget-content.shifted {
-    margin-left: 14px;
+    --content-left: 14px;
 }
 
 .track-text {
@@ -64,7 +76,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 0 8px 0 24px;
+    padding: 0 8px 0 var(--actions-fade);
     background: linear-gradient(to right, transparent, var(--bg) 20px);
     opacity: 0;
     pointer-events: none;
