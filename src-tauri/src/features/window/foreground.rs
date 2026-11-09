@@ -1,5 +1,5 @@
 use std::sync::OnceLock;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::thread;
 
 use tauri::{Emitter, WebviewWindow};
@@ -22,6 +22,8 @@ const VISIBILITY_EVENT: &str = "widget-visibility";
 const TOPMOST_FALLBACK_INTERVAL_MS: u32 = 2_000;
 
 static WIDGET: OnceLock<WebviewWindow> = OnceLock::new();
+/// Lu une fois au démarrage : `window.hwnd()` passe par le thread principal. Valeur brute car HWND n'est pas `Send`.
+static WIDGET_HWND: AtomicIsize = AtomicIsize::new(0);
 static HIDDEN: AtomicBool = AtomicBool::new(false);
 /// Tant que c'est vrai, la fenêtre n'est plus remise au premier plan : sinon elle recouvre le menu contextuel.
 static PAUSED: AtomicBool = AtomicBool::new(false);
@@ -76,14 +78,8 @@ fn sync_visibility(window: &WebviewWindow) -> bool {
 }
 
 /// Remet la fenêtre devant la barre des tâches : change uniquement le z-order, ni position, ni taille, ni focus.
-fn raise_to_top(window: &WebviewWindow) {
-    let hwnd = match window.hwnd() {
-        Ok(hwnd) => hwnd,
-        Err(e) => {
-            log::error!("impossible d'obtenir le HWND : {e}");
-            return;
-        }
-    };
+fn raise_to_top() {
+    let hwnd = HWND(WIDGET_HWND.load(Ordering::Relaxed) as *mut _);
     let result = unsafe {
         SetWindowPos(
             hwnd,
@@ -108,7 +104,7 @@ fn refresh() {
         return;
     };
     if !sync_visibility(window) {
-        raise_to_top(window);
+        raise_to_top();
     }
 }
 
@@ -131,6 +127,13 @@ unsafe extern "system" fn on_fallback_timer(_hwnd: HWND, _msg: u32, _id: usize, 
 /// Réagit aux changements de fenêtre active (clic sur la barre des tâches, lancement d'un jeu…),
 /// avec un contrôle de secours lent pour les cas sans changement de fenêtre.
 pub fn keep_on_top(window: WebviewWindow) {
+    match window.hwnd() {
+        Ok(hwnd) => WIDGET_HWND.store(hwnd.0 as isize, Ordering::Relaxed),
+        Err(e) => {
+            log::error!("impossible d'obtenir le HWND : {e}");
+            return;
+        }
+    }
     if WIDGET.set(window).is_err() {
         return;
     }
