@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
-import SpotifyWidget from "./components/SpotifyWidget/SpotifyWidget";
+import SmtcWidget from "./components/SmtcWidget/SmtcWidget";
 import { TrackInfo, TrackState } from "./types/track.types";
 import { useSystemColors } from "./hooks/useSystemColors";
 
@@ -38,7 +38,7 @@ const App = () => {
     };
   }, []);
 
-  return <SpotifyWidget track={state.track} receivedAt={state.receivedAt} />;
+  return <SmtcWidget track={state.track} receivedAt={state.receivedAt} />;
 };
 
 export default App;

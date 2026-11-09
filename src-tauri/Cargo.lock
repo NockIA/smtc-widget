@@ -3234,6 +3234,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "smtc-widget"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "image",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-single-instance",
+ "thiserror 2.0.21",
+ "webview2-com",
+ "windows",
+]
+
+[[package]]
 name = "socket2"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3289,23 +3306,6 @@ dependencies = [
  "gobject-sys",
  "libc",
  "system-deps",
-]
-
-[[package]]
-name = "spotify-widget"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "image",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-single-instance",
- "thiserror 2.0.21",
- "webview2-com",
- "windows",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-# Spotify Widget
+# SMTC Widget
 
 Petit widget Windows (Tauri 2 + React + TypeScript) qui reste au-dessus de la barre des tâches et affiche la musique / media en cours de lecture via SMTC.
 
@@ -28,7 +28,7 @@ La première compilation Rust est longue (plusieurs minutes). Un changement de `
 | Commande                             | Rôle                                                                                                             |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | `npm run tauri dev`                  | Lance l'app en mode développement                                                                                |
-| `npm run tauri build`                | Exécutable (`src-tauri/target/release/spotify-widget.exe`) et installateurs (`src-tauri/target/release/bundle/`) |
+| `npm run tauri build`                | Exécutable (`src-tauri/target/release/smtc-widget.exe`) et installateurs (`src-tauri/target/release/bundle/`) |
 | `npm run tauri build -- --no-bundle` | Exécutable seul, sans installateur : plus rapide (mesures, tests en release)                                     |
 | `npm run dev`                        | Lance seulement le front dans le navigateur (sans Tauri)                                                         |
 | `npm run build`                      | Vérifie les types et construit le front                                                                          |
@@ -51,7 +51,7 @@ src/                          Front React / TypeScript
   App.tsx                     Écoute des événements du backend (morceau, couleurs, visibilité)
   components/
     IconButton/               Bouton rond avec icône SVG
-    SpotifyWidget/            Widget (titre défilant, pochette, progression, volume, contrôles, poignée)
+    SmtcWidget/               Widget (titre défilant, pochette, progression, volume, contrôles, poignée)
   hooks/                      useAlbumArt, useHoverPanel, useSystemColors, useVolume
   styles/                     Variables de couleur (_colors.css), reset, styles globaux
   types/                      Types partagés avec le backend (morceau, couleurs système)

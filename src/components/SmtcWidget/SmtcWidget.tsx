@@ -9,14 +9,14 @@ import { useVolume } from "../../hooks/useVolume";
 import { useHoverPanel } from "../../hooks/useHoverPanel";
 import { useAlbumArt } from "../../hooks/useAlbumArt";
 import { useReservedWidth } from "../../hooks/useReservedWidth";
-import "./SpotifyWidget.css";
+import "./SmtcWidget.css";
 
-interface SpotifyWidgetProps {
+interface SmtcWidgetProps {
   track: TrackInfo | null;
   receivedAt: number;
 }
 
-const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
+const SmtcWidget = ({ track, receivedAt }: SmtcWidgetProps) => {
   const { volume, setVolume, refresh } = useVolume(track?.source);
   const panels = useHoverPanel(3000);
   const albumArt = useAlbumArt(track, receivedAt);
@@ -27,7 +27,7 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
   return (
     <div
       ref={containerRef}
-      className="spotify-widget"
+      className="smtc-widget"
       onMouseEnter={() => {
         refresh();
         panels.onMouseEnter();
@@ -81,4 +81,4 @@ const SpotifyWidget = ({ track, receivedAt }: SpotifyWidgetProps) => {
   );
 };
 
-export default SpotifyWidget;
+export default SmtcWidget;
