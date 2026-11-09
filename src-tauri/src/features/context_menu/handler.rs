@@ -1,7 +1,9 @@
 use tauri::menu::MenuEvent;
 use tauri::{AppHandle, Manager};
 
-use super::constants::{MONITOR_PREFIX, QUIT_ID, SOURCE_PREFIX, THEME_PREFIX};
+use tauri_plugin_autostart::ManagerExt;
+
+use super::constants::{AUTOSTART_ID, MONITOR_PREFIX, QUIT_ID, SOURCE_PREFIX, THEME_PREFIX};
 use crate::features::appearance;
 use crate::features::audio_source::AudioSourceState;
 use crate::features::preferences::{PreferencesStore, ThemePreference};
@@ -30,11 +32,25 @@ fn move_to_monitor(app: &AppHandle, key: &str) {
     }
 }
 
+fn toggle_autostart(app: &AppHandle) {
+    let autolaunch = app.autolaunch();
+    let result = if autolaunch.is_enabled().unwrap_or(false) {
+        autolaunch.disable()
+    } else {
+        autolaunch.enable()
+    };
+    if let Err(e) = result {
+        eprintln!("changement du lancement au démarrage échoué : {e}");
+    }
+}
+
 pub fn handle_menu_event(app: &AppHandle, event: MenuEvent) {
     let id = event.id().as_ref();
 
     if id == QUIT_ID {
         app.exit(0);
+    } else if id == AUTOSTART_ID {
+        toggle_autostart(app);
     } else if let Some(source) = id.strip_prefix(SOURCE_PREFIX) {
         app.state::<AudioSourceState>()
             .select_source(source.to_owned());

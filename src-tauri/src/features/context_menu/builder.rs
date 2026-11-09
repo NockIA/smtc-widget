@@ -1,7 +1,8 @@
 use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager, WebviewWindow, Wry};
+use tauri_plugin_autostart::ManagerExt;
 
-use super::constants::{MONITOR_PREFIX, QUIT_ID, SOURCE_PREFIX, THEME_PREFIX};
+use super::constants::{AUTOSTART_ID, MONITOR_PREFIX, QUIT_ID, SOURCE_PREFIX, THEME_PREFIX};
 use crate::features::audio_source::{self, AudioSourceState};
 use crate::features::preferences::{PreferencesStore, ThemePreference};
 use crate::features::window;
@@ -75,6 +76,14 @@ pub fn build_menu(app: &AppHandle, window: &WebviewWindow) -> AppResult<Menu<Wry
             &monitor_submenu(app, window)?,
             &theme_submenu(app)?,
             &PredefinedMenuItem::separator(app)?,
+            &CheckMenuItem::with_id(
+                app,
+                AUTOSTART_ID,
+                "Lancer au démarrage",
+                true,
+                app.autolaunch().is_enabled().unwrap_or(false),
+                None::<&str>,
+            )?,
             &MenuItem::with_id(app, QUIT_ID, "Quitter", true, None::<&str>)?,
         ],
     )?)

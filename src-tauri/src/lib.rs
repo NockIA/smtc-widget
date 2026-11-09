@@ -14,6 +14,10 @@ pub fn run() {
                 let _ = window.show();
             }
         }))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .setup(|app| {
             app.manage(PreferencesStore::load(&app.path().app_config_dir()?));
 
