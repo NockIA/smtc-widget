@@ -13,3 +13,8 @@
 .icon-button:hover {
   background: var(--surface-hover);
 }
+
+.icon-button svg {
+    width: 14px;
+    height: 14px;
+}

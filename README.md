@@ -69,6 +69,7 @@ sa logique et ses commandes Tauri.
 ```
 src/                          Front React / TypeScript
   App.tsx                     Écoute des événements du backend (morceau, couleurs, visibilité)
+  assets/icons/               Icônes SVG (importées comme composants via SVGR, couleur héritée du thème)
   components/
     ErrorBoundary/            Repli affiché si le rendu plante (réessai automatique + bouton)
     IconButton/               Bouton rond avec icône SVG
