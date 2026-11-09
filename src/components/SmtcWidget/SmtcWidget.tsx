@@ -35,7 +35,7 @@ const SmtcWidget = ({ track, receivedAt, hidden }: SmtcWidgetProps) => {
     commands.refreshSystemColors();
   };
 
-  const onContextMenu = (event: MouseEvent) => {
+  const onContextMenu = (event: MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     commands.showContextMenu(event.clientX);
   };

@@ -1,6 +1,6 @@
 # SMTC Widget
 
-Petit widget Windows (Tauri 2 + React + TypeScript) qui reste au-dessus de la barre des tâches et affiche la musique / media en cours de lecture via SMTC.
+Petit widget Windows (Tauri 2 + Preact + TypeScript) qui reste au-dessus de la barre des tâches et affiche la musique / media en cours de lecture via SMTC.
 
 ## Prérequis
 
@@ -21,7 +21,7 @@ npm install
 npm run tauri dev
 ```
 
-La première compilation Rust est longue (plusieurs minutes). Un changement de `src-tauri/tauri.conf.json` ou du code Rust demande un redémarrage ou déclenche une recompilation ; le front (React) se recharge à chaud.
+La première compilation Rust est longue (plusieurs minutes). Un changement de `src-tauri/tauri.conf.json` ou du code Rust demande un redémarrage ou déclenche une recompilation ; le front (Preact) se recharge à chaud.
 
 ## Commandes utiles
 
@@ -68,7 +68,7 @@ Le code est organisé **par feature** : chaque dossier de `features/` regroupe s
 sa logique et ses commandes Tauri.
 
 ```
-src/                          Front React / TypeScript
+src/                          Front Preact / TypeScript
   App.tsx                     Relie le morceau courant et la visibilité au widget
   assets/icons/               Icônes SVG (importées comme composants via SVGR, couleur héritée du thème)
   components/
@@ -106,6 +106,7 @@ Les constantes restent en tête du fichier qui les utilise.
 - `*.utils.ts` : fonctions utilitaires ; `*.types.ts` : types partagés ; `<CONSTANTE>.ts` : une constante partagée par fichier.
 - Imports : alias `@/` pour tout ce qui remonte dans l'arborescence, ordre vérifié par `npm run lint`.
 - Les appels au backend passent uniquement par `commands` (`utils/commands.utils.ts`).
+- Preact via `preact/compat` : les imports restent `from "react"` (alias fourni par `@preact/preset-vite`, repris dans `tsconfig.json` pour les types).
 
 ## Environnement de développement conseillé
 

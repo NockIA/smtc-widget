@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import preact from "@preact/preset-vite";
 import svgr from "vite-plugin-svgr";
 // @ts-expect-error type error without @types/node package
 import process from "node:process";
@@ -8,7 +8,7 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(() => ({
-  plugins: [react(), svgr()],
+  plugins: [preact(), svgr()],
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },

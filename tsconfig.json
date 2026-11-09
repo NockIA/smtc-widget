@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "jsxImportSource": "preact",
 
     /* Linting */
     "strict": true,
@@ -21,7 +22,13 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Alias */
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "react": ["./node_modules/preact/compat"],
+      "react-dom": ["./node_modules/preact/compat"],
+      "react-dom/client": ["./node_modules/preact/compat/client"],
+      "react/jsx-runtime": ["./node_modules/preact/jsx-runtime"]
+    }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

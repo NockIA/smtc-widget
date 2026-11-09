@@ -18,7 +18,7 @@ const VolumeSlider = ({ volume, onChange }: VolumeSliderProps) => (
     style={{ "--fill": `${volume * 100}%` } as CSSProperties}
     title={`Volume : ${Math.round(volume * 100)} %`}
     aria-label="Volume"
-    onChange={(event) => onChange(Number(event.target.value))}
+    onInput={(event) => onChange(Number(event.currentTarget.value))}
   />
 );
 
