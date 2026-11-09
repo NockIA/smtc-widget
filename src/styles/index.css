@@ -2,31 +2,31 @@
 @import "./_colors.css";
 
 :root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 400;
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
 
-    color: var(--text);
+  color: var(--text);
 }
 
 /* Widget caché par une application plein écran : plus aucune animation. */
 .widget-hidden *,
 .widget-hidden *::before,
 .widget-hidden *::after {
-    animation-play-state: paused !important;
+  animation-play-state: paused !important;
 }
 
 html,
 body,
 #root {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
 }

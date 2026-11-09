@@ -76,7 +76,7 @@ fn publish(app: &AppHandle, emitter: &mut TrackEmitter) {
     let selected = app.state::<AudioSourceState>().selected();
     match get_current_track(selected.as_deref()) {
         Ok(track) => emitter.emit_if_changed(app, track),
-        Err(e) => eprintln!("get_current_track a échoué : {e}"),
+        Err(e) => log::error!("get_current_track a échoué : {e}"),
     }
 }
 
@@ -103,7 +103,7 @@ fn run_listener(
         }
 
         if needs_resubscribe && let Err(e) = resubscribe(&manager, &app, &tx, &mut subscription) {
-            eprintln!("réabonnement à la session a échoué : {e}");
+            log::error!("réabonnement à la session a échoué : {e}");
         }
         publish(&app, &mut emitter);
     }
@@ -121,7 +121,7 @@ pub fn start_listening(app: AppHandle) {
 
     std::thread::spawn(move || {
         if let Err(e) = run_listener(app, rx, tx) {
-            eprintln!("start_listening a échoué : {e}");
+            log::error!("start_listening a échoué : {e}");
         }
     });
 }

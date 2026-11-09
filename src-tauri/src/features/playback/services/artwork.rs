@@ -17,6 +17,7 @@ const THUMBNAIL_SIZE_PX: u32 = 96;
 /// Réduit l'image en carré (recadrage centré) et la réencode en JPEG. `None` si le format est illisible.
 fn shrink(bytes: &[u8]) -> Option<Vec<u8>> {
     let thumbnail = image::load_from_memory(bytes)
+        .inspect_err(|e| log::warn!("pochette illisible, image d'origine conservée : {e}"))
         .ok()?
         .resize_to_fill(THUMBNAIL_SIZE_PX, THUMBNAIL_SIZE_PX, FilterType::Triangle)
         .to_rgb8();
@@ -24,6 +25,7 @@ fn shrink(bytes: &[u8]) -> Option<Vec<u8>> {
     let mut jpeg = Vec::new();
     DynamicImage::ImageRgb8(thumbnail)
         .write_to(&mut Cursor::new(&mut jpeg), ImageFormat::Jpeg)
+        .inspect_err(|e| log::warn!("réencodage de la pochette échoué : {e}"))
         .ok()?;
     Some(jpeg)
 }
@@ -54,7 +56,9 @@ pub fn get_album_art(selected: Option<&str>) -> windows::core::Result<Option<Str
         return Ok(Some(art.clone()));
     }
 
+    // Pas de miniature : cas courant (source sans pochette), pas une erreur.
     let Ok(thumbnail) = props.Thumbnail() else {
+        log::debug!("aucune miniature fournie par la source");
         return Ok(None);
     };
     let stream = thumbnail.OpenReadAsync()?.join()?;

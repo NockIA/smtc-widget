@@ -27,7 +27,7 @@ pub fn watch(window: WebviewWindow) {
     match monitors_signature(&window) {
         Ok(signature) => *KNOWN_SIGNATURE.lock().unwrap() = signature,
         Err(e) => {
-            eprintln!("lecture des écrans échouée : {e}");
+            log::error!("lecture des écrans échouée : {e}");
             return;
         }
     }
@@ -51,7 +51,7 @@ pub fn watch(window: WebviewWindow) {
 
             let prefs = window.state::<PreferencesStore>().snapshot();
             if let Err(e) = place_on_preferred_monitor(&window, &prefs) {
-                eprintln!("replacement de la fenêtre échoué : {e}");
+                log::error!("replacement de la fenêtre échoué : {e}");
             }
         }
     });

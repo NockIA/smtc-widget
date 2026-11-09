@@ -34,7 +34,10 @@ impl Drop for ComGuard {
 
 fn process_exe_name(pid: u32) -> Option<String> {
     unsafe {
-        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+        // Processus protégé ou déjà terminé : normal, on passe à la session suivante.
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)
+            .inspect_err(|e| log::debug!("OpenProcess({pid}) refusé : {e}"))
+            .ok()?;
 
         let mut buffer = [0u16; PATH_BUFFER_LEN];
         let mut len = buffer.len() as u32;
@@ -45,7 +48,9 @@ fn process_exe_name(pid: u32) -> Option<String> {
             &mut len,
         );
         let _ = CloseHandle(handle);
-        result.ok()?;
+        result
+            .inspect_err(|e| log::debug!("QueryFullProcessImageNameW({pid}) échoué : {e}"))
+            .ok()?;
 
         let path = String::from_utf16_lossy(&buffer[..len as usize]);
         path.rsplit('\\').next().map(str::to_owned)

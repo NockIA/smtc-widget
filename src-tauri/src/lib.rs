@@ -8,7 +8,10 @@ use features::{appearance, context_menu, playback, volume, window};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    install_panic_hook();
+
+    let result = tauri::Builder::default()
+        .plugin(logging_plugin())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
@@ -23,11 +26,11 @@ pub fn run() {
 
             let main_window = app
                 .get_webview_window("main")
-                .expect("fenêtre 'main' introuvable");
+                .ok_or("fenêtre 'main' introuvable")?;
 
             let theme = app.state::<PreferencesStore>().snapshot().theme;
             if let Err(e) = appearance::apply_theme(&main_window, theme) {
-                eprintln!("application du thème échouée : {e}");
+                log::error!("application du thème échouée : {e}");
             }
 
             window::init_placement(main_window.clone());
@@ -49,6 +52,41 @@ pub fn run() {
             appearance::commands::refresh_system_colors,
             context_menu::commands::show_context_menu,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .run(tauri::generate_context!());
+
+    if let Err(e) = result {
+        log::error!("arrêt de l'application sur erreur : {e}");
+        log::logger().flush();
+        std::process::exit(1);
+    }
+}
+
+/// Fichier de log dans le dossier de logs de l'app (un fichier + sa rotation), console en plus en debug.
+fn logging_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+    use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
+
+    let level = if cfg!(debug_assertions) {
+        log::LevelFilter::Debug
+    } else {
+        log::LevelFilter::Info
+    };
+    let mut builder = tauri_plugin_log::Builder::new()
+        .level(level)
+        .max_file_size(512 * 1024)
+        .rotation_strategy(RotationStrategy::KeepOne)
+        .target(Target::new(TargetKind::LogDir { file_name: None }));
+    if cfg!(debug_assertions) {
+        builder = builder.target(Target::new(TargetKind::Stdout));
+    }
+    builder.build()
+}
+
+/// Le profil release est en `panic = "abort"` : sans ce hook, la cause d'un crash serait perdue.
+fn install_panic_hook() {
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        log::error!("panique : {info}");
+        log::logger().flush();
+        default_hook(info);
+    }));
 }

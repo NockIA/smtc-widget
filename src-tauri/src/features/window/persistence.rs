@@ -46,7 +46,7 @@ pub fn track_moves(window: WebviewWindow) {
             while rx.recv_timeout(SAVE_DEBOUNCE).is_ok() {}
 
             if let Err(e) = save_current_position(&window) {
-                eprintln!("sauvegarde de la position échouée : {e}");
+                log::error!("sauvegarde de la position échouée : {e}");
             }
         }
     });

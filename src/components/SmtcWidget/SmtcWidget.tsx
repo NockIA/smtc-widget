@@ -10,6 +10,7 @@ import { useHoverPanel } from "../../hooks/useHoverPanel";
 import { useAlbumArt } from "../../hooks/useAlbumArt";
 import { useReservedWidth } from "../../hooks/useReservedWidth";
 import "./SmtcWidget.css";
+import { handleCommandError } from "../../utils/error.utils";
 
 interface SmtcWidgetProps {
   track: TrackInfo | null;
@@ -31,12 +32,16 @@ const SmtcWidget = ({ track, receivedAt }: SmtcWidgetProps) => {
       onMouseEnter={() => {
         refresh();
         panels.onMouseEnter();
-        invoke("refresh_system_colors").catch(console.error);
+        invoke("refresh_system_colors").catch(
+          handleCommandError("refresh_system_colors"),
+        );
       }}
       onMouseLeave={panels.onMouseLeave}
       onContextMenu={(event) => {
         event.preventDefault();
-        invoke("show_context_menu", { x: event.clientX }).catch(console.error);
+        invoke("show_context_menu", { x: event.clientX }).catch(
+          handleCommandError("show_context_menu"),
+        );
       }}
     >
       <div className={`widget-handle${panels.visible ? " visible" : ""}`}>

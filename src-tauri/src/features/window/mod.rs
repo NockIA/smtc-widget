@@ -19,7 +19,7 @@ pub fn init_placement(window: WebviewWindow) {
     let prefs = window.state::<PreferencesStore>().snapshot();
 
     if let Err(e) = placement::place_on_preferred_monitor(&window, &prefs) {
-        eprintln!("placement de la fenêtre échoué : {e}");
+        log::error!("placement de la fenêtre échoué : {e}");
     }
     layout::watch(window.clone());
     persistence::track_moves(window);

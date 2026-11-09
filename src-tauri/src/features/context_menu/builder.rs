@@ -6,7 +6,7 @@ use super::constants::{AUTOSTART_ID, MONITOR_PREFIX, QUIT_ID, SOURCE_PREFIX, THE
 use crate::features::audio_source::{self, AudioSourceState};
 use crate::features::preferences::{PreferencesStore, ThemePreference};
 use crate::features::window;
-use crate::shared::error::AppResult;
+use crate::shared::error::{AppError, AppResult};
 
 fn theme_label(theme: ThemePreference) -> &'static str {
     match theme {
@@ -18,7 +18,7 @@ fn theme_label(theme: ThemePreference) -> &'static str {
 
 fn source_submenu(app: &AppHandle) -> AppResult<Submenu<Wry>> {
     let selected = app.state::<AudioSourceState>().selected();
-    let sources = audio_source::list_sources(selected.as_deref())?;
+    let sources = audio_source::list_sources(selected.as_deref()).map_err(AppError::Smtc)?;
 
     let menu = Submenu::new(app, "Piste audio", !sources.is_empty())?;
     for source in &sources {

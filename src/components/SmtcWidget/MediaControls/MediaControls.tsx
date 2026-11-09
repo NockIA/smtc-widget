@@ -1,10 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import IconButton from "../../IconButton/IconButton";
+import { handleCommandError } from "../../../utils/error.utils";
 
 type MediaAction = "previous" | "togglePlayPause" | "next";
 
 const sendAction = (action: MediaAction) =>
-  invoke("media_control", { action }).catch(console.error);
+  invoke("media_control", { action }).catch(
+    handleCommandError("media_control"),
+  );
 
 interface MediaControlsProps {
   isPlaying: boolean;

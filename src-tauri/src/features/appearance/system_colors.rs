@@ -195,7 +195,7 @@ pub fn watch(window: WebviewWindow) {
                 Ok(())
             });
             if let Err(e) = settings.ColorValuesChanged(&handler) {
-                eprintln!("abonnement aux couleurs Windows échoué : {e}");
+                log::error!("abonnement aux couleurs Windows échoué : {e}");
             }
         }
 
@@ -205,12 +205,12 @@ pub fn watch(window: WebviewWindow) {
                 match read_with(&window, settings.as_ref()) {
                     Ok(colors) if last.as_ref() != Some(&colors) => {
                         if let Err(e) = window.emit(SYSTEM_COLORS_EVENT, &colors) {
-                            eprintln!("emit {SYSTEM_COLORS_EVENT} a échoué : {e}");
+                            log::error!("emit {SYSTEM_COLORS_EVENT} a échoué : {e}");
                         }
                         last = Some(colors);
                     }
                     Ok(_) => {}
-                    Err(e) => eprintln!("lecture des couleurs système échouée : {e}"),
+                    Err(e) => log::error!("lecture des couleurs système échouée : {e}"),
                 }
             }
 

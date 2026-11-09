@@ -14,12 +14,12 @@ fn set_theme(app: &AppHandle, theme: ThemePreference) {
         .state::<PreferencesStore>()
         .update(|prefs| prefs.theme = theme)
     {
-        eprintln!("sauvegarde du thème échouée : {e}");
+        log::error!("sauvegarde du thème échouée : {e}");
     }
     if let Some(window) = app.get_webview_window("main")
         && let Err(e) = appearance::apply_theme(&window, theme)
     {
-        eprintln!("application du thème échouée : {e}");
+        log::error!("application du thème échouée : {e}");
     }
 }
 
@@ -28,7 +28,7 @@ fn move_to_monitor(app: &AppHandle, key: &str) {
         return;
     };
     if let Err(e) = window::move_to_monitor(&window, key) {
-        eprintln!("déplacement vers l'écran échoué : {e}");
+        log::error!("déplacement vers l'écran échoué : {e}");
     }
 }
 
@@ -40,7 +40,7 @@ fn toggle_autostart(app: &AppHandle) {
         autolaunch.enable()
     };
     if let Err(e) = result {
-        eprintln!("changement du lancement au démarrage échoué : {e}");
+        log::error!("changement du lancement au démarrage échoué : {e}");
     }
 }
 

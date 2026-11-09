@@ -21,6 +21,7 @@ pub fn smtc_manager() -> windows::core::Result<SmtcManager> {
 pub fn source_id(session: &Session) -> String {
     session
         .SourceAppUserModelId()
+        .inspect_err(|e| log::warn!("lecture de l'identifiant de source échouée : {e}"))
         .map(|id| id.to_string())
         .unwrap_or_default()
 }
@@ -28,6 +29,7 @@ pub fn source_id(session: &Session) -> String {
 pub fn all_sessions(manager: &SmtcManager) -> Vec<Session> {
     manager
         .GetSessions()
+        .inspect_err(|e| log::warn!("liste des sessions SMTC illisible : {e}"))
         .map(|sessions| sessions.into_iter().collect())
         .unwrap_or_default()
 }

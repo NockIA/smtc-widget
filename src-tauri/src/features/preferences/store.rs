@@ -15,10 +15,18 @@ impl PreferencesStore {
     /// Charge le fichier du dossier de config ; préférences par défaut s'il est absent ou illisible.
     pub fn load(config_dir: &Path) -> Self {
         let path = config_dir.join(PREFERENCES_FILE);
-        let data = fs::read_to_string(&path)
-            .ok()
-            .and_then(|content| serde_json::from_str(&content).ok())
-            .unwrap_or_default();
+        let data = match fs::read_to_string(&path) {
+            Ok(content) => serde_json::from_str(&content).unwrap_or_else(|e| {
+                log::warn!("préférences corrompues, valeurs par défaut utilisées : {e}");
+                Preferences::default()
+            }),
+            // Premier lancement : pas de fichier, rien à signaler.
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Preferences::default(),
+            Err(e) => {
+                log::warn!("préférences illisibles, valeurs par défaut utilisées : {e}");
+                Preferences::default()
+            }
+        };
         Self {
             path,
             data: Mutex::new(data),

@@ -23,6 +23,6 @@ pub fn set_low_memory(window: &WebviewWindow, low: bool) {
         }
     });
     if let Err(e) = result {
-        eprintln!("réglage mémoire de WebView2 échoué : {e}");
+        log::error!("réglage mémoire de WebView2 échoué : {e}");
     }
 }

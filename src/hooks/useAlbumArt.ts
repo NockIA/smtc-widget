@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { TrackInfo } from "../types/track.types";
+import { handleCommandError } from "../utils/error.utils";
 
 /** Certaines sources envoient la pochette après le titre ; au-delà, on considère qu'il n'y en a pas. */
 const MAX_ATTEMPTS = 3;
@@ -19,9 +20,7 @@ export const useAlbumArt = (track: TrackInfo | null, receivedAt: number) => {
     found: false,
   });
 
-  const key = track
-    ? [track.source, track.title, track.artist, track.album].join("|")
-    : null;
+  const key = track ? [track.source, track.title, track.artist, track.album].join("|") : null;
 
   useEffect(() => {
     if (key === null) {
@@ -43,7 +42,7 @@ export const useAlbumArt = (track: TrackInfo | null, receivedAt: number) => {
         if (url) current.found = true;
         setArt({ key, url });
       })
-      .catch(console.error);
+      .catch(handleCommandError("album_art"));
     return () => {
       cancelled = true;
     };

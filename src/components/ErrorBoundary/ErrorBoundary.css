@@ -1,0 +1,22 @@
+.error-fallback {
+  --error-color: #e5484d;
+  --retry-width: 20px;
+}
+
+.error-fallback .widget-content {
+  max-width: calc(100% - var(--retry-width) - 8px);
+}
+
+.error-fallback-icon {
+  flex: none;
+  color: var(--error-color);
+}
+
+.error-fallback-action {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+}

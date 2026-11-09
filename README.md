@@ -41,6 +41,23 @@ Côté Rust, depuis `src-tauri/` :
 | `cargo clippy` | Linter Rust                               |
 | `cargo fmt`    | Formate le code                           |
 
+## En cas d'erreur : journal de log
+
+Si le widget affiche « Une erreur est survenue » (triangle rouge) ou se comporte de façon anormale,
+le détail est dans le journal de log, écrit aussi bien en développement qu'en release :
+
+```
+%LOCALAPPDATA%\com.iseen.smtc-widget\logs\smtc-widget.log
+```
+
+- Le backend (Rust) et le front (préfixe `[front]`) écrivent dans le même fichier.
+- Niveau `info` en release, `debug` en développement (où les logs sont aussi affichés dans la console).
+- Le fichier est limité à 512 Ko : au-delà, il est archivé (un seul ancien fichier conservé, dans le même dossier) et un nouveau est créé.
+- Les plantages (panic) y sont aussi consignés.
+- Le front ne reçoit jamais le message d'erreur brut, seulement un code (`smtc_unavailable`, `audio_unavailable`, `internal`) :
+  le détail complet n'existe que dans ce journal.
+- Si le rendu plante, le widget affiche un repli puis réessaie seul au bout de 5 s ; le bouton ↻ force un nouvel essai.
+
 ## Structure
 
 Le code est organisé **par feature** : chaque dossier de `features/` regroupe ses modèles,
@@ -50,19 +67,21 @@ sa logique et ses commandes Tauri.
 src/                          Front React / TypeScript
   App.tsx                     Écoute des événements du backend (morceau, couleurs, visibilité)
   components/
+    ErrorBoundary/            Repli affiché si le rendu plante (réessai automatique + bouton)
     IconButton/               Bouton rond avec icône SVG
     SmtcWidget/               Widget (titre défilant, pochette, progression, volume, contrôles, poignée)
+  constants/                  Constantes (ERROR_CODES.ts)
   hooks/                      useAlbumArt, useHoverPanel, useSystemColors, useVolume
   styles/                     Variables de couleur (_colors.css), reset, styles globaux
   types/                      Types partagés avec le backend (morceau, couleurs système)
-  utils/                      Application des couleurs système (fond, accent)
+  utils/                      Couleurs système (fond, accent), logger, gestion des erreurs de commandes
 
 src-tauri/                    Backend Rust et configuration Tauri
   tauri.conf.json             Configuration de la fenêtre et du build
   capabilities/               Permissions Tauri
   src/
     lib.rs                    Point d'entrée : plugins, setup, liste des commandes
-    shared/                   Code commun : erreur de commande (AppError), manager SMTC partagé
+    shared/                   Code commun : erreur de commande (AppError, code seul envoyé au front), manager SMTC partagé
     features/
       playback/               Morceau en cours, contrôles, pochette, écoute des événements SMTC
       audio_source/           Source audio choisie (état, liste des sources)

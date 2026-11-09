@@ -41,7 +41,7 @@ impl TrackEmitter {
             return;
         }
         if let Err(e) = app.emit(MEDIA_CHANGED_EVENT, &track) {
-            eprintln!("emit {MEDIA_CHANGED_EVENT} a échoué : {e}");
+            log::error!("emit {MEDIA_CHANGED_EVENT} a échoué : {e}");
             return;
         }
         self.last = Some(track);

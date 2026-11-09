@@ -4,11 +4,9 @@ import { listen } from "@tauri-apps/api/event";
 
 import SmtcWidget from "./components/SmtcWidget/SmtcWidget";
 import { TrackInfo, TrackState } from "./types/track.types";
-import { useSystemColors } from "./hooks/useSystemColors";
+import { handleCommandError } from "./utils/error.utils";
 
 const App = () => {
-  useSystemColors();
-
   const [state, setState] = useState<TrackState>({
     track: null,
     receivedAt: performance.now(),
@@ -19,7 +17,9 @@ const App = () => {
       setState({ track, receivedAt: performance.now() });
 
     const fetchTrack = () =>
-      invoke<TrackInfo | null>("current_track").then(update).catch(console.error);
+      invoke<TrackInfo | null>("current_track")
+        .then(update)
+        .catch(handleCommandError("current_track"));
     fetchTrack();
 
     const unlistenTrack = listen<TrackInfo | null>("media-changed", (event) =>

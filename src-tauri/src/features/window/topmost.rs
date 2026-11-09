@@ -57,12 +57,12 @@ fn is_fullscreen_app_running() -> bool {
 fn set_hidden(window: &WebviewWindow, hidden: bool) {
     let result = if hidden { window.hide() } else { window.show() };
     if let Err(e) = result {
-        eprintln!("changement de visibilité échoué : {e}");
+        log::error!("changement de visibilité échoué : {e}");
     }
     HIDDEN.store(hidden, Ordering::Relaxed);
     webview_memory::set_low_memory(window, hidden);
     if let Err(e) = window.emit(VISIBILITY_EVENT, hidden) {
-        eprintln!("emit {VISIBILITY_EVENT} a échoué : {e}");
+        log::error!("emit {VISIBILITY_EVENT} a échoué : {e}");
     }
 }
 
@@ -97,7 +97,7 @@ fn refresh() {
         )
     };
     if let Err(e) = result {
-        eprintln!("SetWindowPos a échoué : {e}");
+        log::error!("SetWindowPos a échoué : {e}");
     }
 }
 
@@ -123,7 +123,7 @@ pub fn keep_on_top(window: WebviewWindow) {
     match window.hwnd() {
         Ok(hwnd) => WIDGET_HWND.store(hwnd.0 as isize, Ordering::Relaxed),
         Err(e) => {
-            eprintln!("impossible d'obtenir le HWND : {e}");
+            log::error!("impossible d'obtenir le HWND : {e}");
             return;
         }
     }
@@ -143,7 +143,7 @@ pub fn keep_on_top(window: WebviewWindow) {
             WINEVENT_OUTOFCONTEXT,
         );
         if hook.is_invalid() {
-            eprintln!("SetWinEventHook a échoué");
+            log::error!("SetWinEventHook a échoué");
         }
         SetTimer(
             None,
