@@ -1,12 +1,16 @@
-use std::io::Cursor;
 use std::sync::Mutex;
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use image::imageops::FilterType;
-use image::{DynamicImage, ImageFormat};
+use windows::Graphics::Imaging::{
+    BitmapAlphaMode, BitmapBounds, BitmapDecoder, BitmapEncoder, BitmapInterpolationMode, BitmapPixelFormat,
+    BitmapTransform, ColorManagementMode, ExifOrientationMode,
+};
 use windows::Media::Control::GlobalSystemMediaTransportControlsSessionMediaProperties as MediaProperties;
-use windows::Storage::Streams::DataReader;
+use windows::Storage::Streams::{
+    DataReader, IRandomAccessStream, IRandomAccessStreamWithContentType, InMemoryRandomAccessStream,
+};
+use windows::core::Interface;
 
 use crate::shared::smtc::{Session, active_session, source_id};
 
@@ -17,12 +21,6 @@ const THUMBNAIL_SIZE_PX: u32 = 96;
 
 /// Dernière pochette lue, avec la clé du morceau correspondant (évite de relire le flux).
 static CACHE: Mutex<Option<(String, String)>> = Mutex::new(None);
-
-/// Image telle que fournie par la source, avant réduction.
-struct RawArtwork {
-    bytes: Vec<u8>,
-    mime: String,
-}
 
 fn cache_key(session: &Session, props: &MediaProperties) -> windows::core::Result<String> {
     Ok(format!(
@@ -44,50 +42,84 @@ fn cached(key: &str) -> Option<String> {
 }
 
 /// `None` si la source ne fournit pas de miniature (cas courant, pas une erreur) ou si elle est vide.
-fn read_artwork(props: &MediaProperties) -> windows::core::Result<Option<RawArtwork>> {
+fn open_artwork(props: &MediaProperties) -> windows::core::Result<Option<IRandomAccessStreamWithContentType>> {
     let Ok(thumbnail) = props.Thumbnail() else {
         log::debug!("aucune miniature fournie par la source");
         return Ok(None);
     };
     let stream = thumbnail.OpenReadAsync()?.join()?;
-    let size = stream.Size()? as u32;
-    if size == 0 {
-        return Ok(None);
-    }
+    Ok((stream.Size()? > 0).then_some(stream))
+}
 
-    let reader = DataReader::CreateDataReader(&stream)?;
+fn read_all(stream: &IRandomAccessStream) -> windows::core::Result<Vec<u8>> {
+    let size = stream.Size()? as u32;
+    stream.Seek(0)?;
+    let reader = DataReader::CreateDataReader(stream)?;
     reader.LoadAsync(size)?.join()?;
     let mut bytes = vec![0u8; size as usize];
     reader.ReadBytes(&mut bytes)?;
-
-    let mime = stream.ContentType().map(|mime| mime.to_string()).unwrap_or_default();
-    Ok(Some(RawArtwork { bytes, mime }))
+    Ok(bytes)
 }
 
-/// Réduit l'image en carré (recadrage centré) et la réencode en JPEG. `None` si le format est illisible.
-fn shrink(bytes: &[u8]) -> Option<Vec<u8>> {
-    let thumbnail = image::load_from_memory(bytes)
-        .inspect_err(|e| log::warn!("pochette illisible, image d'origine conservée : {e}"))
-        .ok()?
-        .resize_to_fill(THUMBNAIL_SIZE_PX, THUMBNAIL_SIZE_PX, FilterType::Triangle)
-        .to_rgb8();
+/// Réduit l'image en carré (mise à l'échelle puis recadrage centré) et la réencode en JPEG.
+fn shrink(source: &IRandomAccessStream) -> windows::core::Result<Vec<u8>> {
+    source.Seek(0)?;
+    let decoder = BitmapDecoder::CreateAsync(source)?.join()?;
 
-    let mut jpeg = Vec::new();
-    DynamicImage::ImageRgb8(thumbnail)
-        .write_to(&mut Cursor::new(&mut jpeg), ImageFormat::Jpeg)
-        .inspect_err(|e| log::warn!("réencodage de la pochette a échoué : {e}"))
-        .ok()?;
-    Some(jpeg)
+    let (width, height) = (decoder.PixelWidth()?, decoder.PixelHeight()?);
+    let scale = f64::from(THUMBNAIL_SIZE_PX) / f64::from(width.min(height).max(1));
+    let scaled = |side: u32| ((f64::from(side) * scale).round() as u32).max(THUMBNAIL_SIZE_PX);
+    let (scaled_width, scaled_height) = (scaled(width), scaled(height));
+
+    let transform = BitmapTransform::new()?;
+    transform.SetInterpolationMode(BitmapInterpolationMode::Fant)?;
+    transform.SetScaledWidth(scaled_width)?;
+    transform.SetScaledHeight(scaled_height)?;
+    transform.SetBounds(BitmapBounds {
+        X: (scaled_width - THUMBNAIL_SIZE_PX) / 2,
+        Y: (scaled_height - THUMBNAIL_SIZE_PX) / 2,
+        Width: THUMBNAIL_SIZE_PX,
+        Height: THUMBNAIL_SIZE_PX,
+    })?;
+    let pixels = decoder
+        .GetPixelDataTransformedAsync(
+            BitmapPixelFormat::Bgra8,
+            BitmapAlphaMode::Ignore,
+            &transform,
+            ExifOrientationMode::IgnoreExifOrientation,
+            ColorManagementMode::DoNotColorManage,
+        )?
+        .join()?
+        .DetachPixelData()?;
+
+    let output = InMemoryRandomAccessStream::new()?;
+    let encoder = BitmapEncoder::CreateAsync(BitmapEncoder::JpegEncoderId()?, &output)?.join()?;
+    encoder.SetPixelData(
+        BitmapPixelFormat::Bgra8,
+        BitmapAlphaMode::Ignore,
+        THUMBNAIL_SIZE_PX,
+        THUMBNAIL_SIZE_PX,
+        96.0,
+        96.0,
+        &pixels,
+    )?;
+    encoder.FlushAsync()?.join()?;
+    read_all(&output.cast()?)
 }
 
 /// Miniature JPEG si l'image est décodable, sinon l'image d'origine.
-fn to_data_url(artwork: RawArtwork) -> String {
-    let (mime, bytes) = match shrink(&artwork.bytes) {
-        Some(jpeg) => (DEFAULT_MIME.to_owned(), jpeg),
-        None if artwork.mime.is_empty() => (DEFAULT_MIME.to_owned(), artwork.bytes),
-        None => (artwork.mime, artwork.bytes),
+fn to_data_url(artwork: &IRandomAccessStreamWithContentType) -> windows::core::Result<String> {
+    let stream: IRandomAccessStream = artwork.cast()?;
+    let (mime, bytes) = match shrink(&stream) {
+        Ok(jpeg) => (DEFAULT_MIME.to_owned(), jpeg),
+        Err(e) => {
+            log::warn!("réduction de la pochette a échoué, image d'origine conservée : {e}");
+            let mime = artwork.ContentType().map(|mime| mime.to_string()).unwrap_or_default();
+            let mime = if mime.is_empty() { DEFAULT_MIME.to_owned() } else { mime };
+            (mime, read_all(&stream)?)
+        }
     };
-    format!("data:{mime};base64,{}", STANDARD.encode(bytes))
+    Ok(format!("data:{mime};base64,{}", STANDARD.encode(bytes)))
 }
 
 /// Pochette du morceau de la source choisie, en data URL. `None` si le morceau n'en a pas
@@ -103,10 +135,10 @@ pub fn get_album_art(selected: Option<&str>) -> windows::core::Result<Option<Str
         return Ok(Some(art));
     }
 
-    let Some(artwork) = read_artwork(&props)? else {
+    let Some(artwork) = open_artwork(&props)? else {
         return Ok(None);
     };
-    let data_url = to_data_url(artwork);
+    let data_url = to_data_url(&artwork)?;
 
     *CACHE.lock().unwrap() = Some((key, data_url.clone()));
     Ok(Some(data_url))

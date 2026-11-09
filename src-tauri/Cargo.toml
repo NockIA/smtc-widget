@@ -21,7 +21,6 @@ tauri-build = { version = "2", features = [] }
 base64 = "0.22"
 thiserror = "2"
 webview2-com = "0.39"
-image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 tauri = { version = "2", features = [] }
 tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
@@ -46,6 +45,7 @@ features = [
     "Win32_System_Threading",
     "Foundation",
     "Storage_Streams",
+    "Graphics_Imaging",
     "UI_ViewManagement",
 ]
 
