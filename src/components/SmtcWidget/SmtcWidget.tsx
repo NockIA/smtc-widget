@@ -24,13 +24,12 @@ interface SmtcWidgetProps {
 }
 
 const SmtcWidget = ({ track, receivedAt, hidden }: SmtcWidgetProps) => {
-  const { volume, setVolume, refresh: refreshVolume } = useVolume(track?.source);
+  const { volume, setVolume } = useVolume(track?.source);
   const panels = useHoverPanel(PANELS_HIDE_DELAY_MS);
   const albumArt = useAlbumArt(track, receivedAt);
   const { containerRef, panelRef } = useReservedWidth(panels.visible && track !== null);
 
   const onMouseEnter = () => {
-    refreshVolume();
     panels.onMouseEnter();
     commands.refreshSystemColors();
   };

@@ -35,6 +35,7 @@ pub fn run() {
             appearance::watch_system_colors(main_window.clone());
             window::keep_on_top(main_window);
 
+            volume::start_watching(app.handle().clone());
             playback::start_listening(app.handle().clone());
 
             Ok(())

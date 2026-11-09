@@ -8,7 +8,8 @@ use windows::core::RuntimeType;
 use super::emitter::TrackEmitter;
 use super::track::get_current_track;
 use crate::features::audio_source::AudioSourceState;
-use crate::shared::smtc::{Session, SmtcManager, resolve_session, smtc_manager};
+use crate::features::volume;
+use crate::shared::smtc::{Session, SmtcManager, resolve_session, smtc_manager, source_id};
 
 /// Attente après le dernier événement SMTC avant de relire le morceau (regroupe les rafales).
 const EVENT_DEBOUNCE: Duration = Duration::from_millis(100);
@@ -67,7 +68,9 @@ fn resubscribe(
     }
 
     let selected = app.state::<AudioSourceState>().selected();
-    if let Some(session) = resolve_session(manager, selected.as_deref()) {
+    let session = resolve_session(manager, selected.as_deref());
+    volume::follow_source(session.as_ref().map(source_id));
+    if let Some(session) = session {
         *subscription = Some(SessionSubscription::new(session, tx)?);
     }
     Ok(())

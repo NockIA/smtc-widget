@@ -1,9 +1,9 @@
 use windows::Win32::Media::Audio::{
-    IAudioSessionControl2, IAudioSessionManager2, IMMDeviceEnumerator, ISimpleAudioVolume, MMDeviceEnumerator,
-    eMultimedia, eRender,
+    IAudioSessionControl, IAudioSessionControl2, IAudioSessionManager2, IMMDeviceEnumerator, ISimpleAudioVolume,
+    MMDeviceEnumerator, eMultimedia, eRender,
 };
 use windows::Win32::System::Com::{CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInstance, CoInitializeEx, CoUninitialize};
-use windows::core::Interface;
+use windows::core::{GUID, Interface};
 
 use super::process;
 use crate::shared::smtc::{active_session, source_id};
@@ -11,10 +11,13 @@ use crate::shared::smtc::{active_session, source_id};
 /// Évite les faux positifs avec des noms d'exécutable très courts.
 const MIN_EXE_STEM_LEN: usize = 3;
 
-struct ComGuard(bool);
+/// Contexte passé à `SetMasterVolume` : la surveillance ignore ainsi les changements faits par le widget lui-même.
+pub(super) const WIDGET_CONTEXT: GUID = GUID::from_u128(0x6d0c_2f4e_8b1a_4c7e_9a35_1f2b_7c8d_9e01);
+
+pub(super) struct ComGuard(bool);
 
 impl ComGuard {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         // `is_ok` couvre S_OK et S_FALSE (déjà initialisé) : les deux demandent un `CoUninitialize`.
         // En cas d'échec (ex : thread déjà en STA), COM reste utilisable et on ne libère rien.
         Self(unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) }.is_ok())
@@ -41,60 +44,71 @@ fn source_matches(source: &str, exe: &str) -> bool {
     stem.len() >= MIN_EXE_STEM_LEN && source.contains(stem)
 }
 
-fn source_volumes(source: &str) -> windows::core::Result<Vec<ISimpleAudioVolume>> {
-    unsafe {
-        let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
-        let device = enumerator.GetDefaultAudioEndpoint(eRender, eMultimedia)?;
-        let manager: IAudioSessionManager2 = device.Activate(CLSCTX_ALL, None)?;
-        let sessions = manager.GetSessionEnumerator()?;
+pub(super) fn device_enumerator() -> windows::core::Result<IMMDeviceEnumerator> {
+    unsafe { CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL) }
+}
 
-        let mut volumes = Vec::new();
-        for index in 0..sessions.GetCount()? {
-            let control = sessions.GetSession(index)?;
-            let pid = control.cast::<IAudioSessionControl2>()?.GetProcessId()?;
-            if pid == 0 {
-                continue;
-            }
-            let Some(exe) = process::exe_name(pid) else {
-                continue;
-            };
-            if source_matches(source, &exe) {
-                volumes.push(control.cast::<ISimpleAudioVolume>()?);
-            }
-        }
-        Ok(volumes)
+/// Gestionnaire des sessions audio du périphérique de sortie par défaut.
+pub(super) fn session_manager(enumerator: &IMMDeviceEnumerator) -> windows::core::Result<IAudioSessionManager2> {
+    unsafe {
+        let device = enumerator.GetDefaultAudioEndpoint(eRender, eMultimedia)?;
+        device.Activate(CLSCTX_ALL, None)
     }
 }
 
-fn current_source(selected: Option<&str>) -> windows::core::Result<Option<String>> {
-    Ok(active_session(selected)?.map(|session| source_id(&session)))
+/// Sessions audio dont le processus correspond à la source SMTC.
+pub(super) fn source_sessions(
+    manager: &IAudioSessionManager2,
+    source: &str,
+) -> windows::core::Result<Vec<IAudioSessionControl>> {
+    unsafe {
+        let sessions = manager.GetSessionEnumerator()?;
+        let mut matching = Vec::new();
+        for index in 0..sessions.GetCount()? {
+            let control = sessions.GetSession(index)?;
+            let pid = control.cast::<IAudioSessionControl2>()?.GetProcessId()?;
+            if pid != 0 && process::exe_name(pid).is_some_and(|exe| source_matches(source, &exe)) {
+                matching.push(control);
+            }
+        }
+        Ok(matching)
+    }
 }
 
-/// Volume (0.0 à 1.0) de la source courante, `None` si aucune session audio ne correspond.
-pub fn get_volume(selected: Option<&str>) -> windows::core::Result<Option<f32>> {
-    let Some(source) = current_source(selected)? else {
-        return Ok(None);
-    };
-    let _com = ComGuard::new();
-
+/// Volume (0.0 à 1.0) le plus fort parmi les sessions, `None` s'il n'y en a aucune.
+pub(super) fn max_volume(sessions: &[IAudioSessionControl]) -> windows::core::Result<Option<f32>> {
     let mut volume: Option<f32> = None;
-    for control in source_volumes(&source)? {
-        let level = unsafe { control.GetMasterVolume()? };
+    for session in sessions {
+        let level = unsafe { session.cast::<ISimpleAudioVolume>()?.GetMasterVolume()? };
         volume = Some(volume.map_or(level, |v| v.max(level)));
     }
     Ok(volume)
 }
 
+fn current_source_sessions(selected: Option<&str>) -> windows::core::Result<Vec<IAudioSessionControl>> {
+    let Some(session) = active_session(selected)? else {
+        return Ok(Vec::new());
+    };
+    let manager = session_manager(&device_enumerator()?)?;
+    source_sessions(&manager, &source_id(&session))
+}
+
+/// Volume (0.0 à 1.0) de la source courante, `None` si aucune session audio ne correspond.
+pub fn get_volume(selected: Option<&str>) -> windows::core::Result<Option<f32>> {
+    let _com = ComGuard::new();
+    max_volume(&current_source_sessions(selected)?)
+}
+
 /// Renvoie `false` si aucune session audio ne correspond.
 pub fn set_volume(selected: Option<&str>, volume: f32) -> windows::core::Result<bool> {
-    let Some(source) = current_source(selected)? else {
-        return Ok(false);
-    };
     let _com = ComGuard::new();
-
-    let controls = source_volumes(&source)?;
-    for control in &controls {
-        unsafe { control.SetMasterVolume(volume.clamp(0.0, 1.0), std::ptr::null())? };
+    let sessions = current_source_sessions(selected)?;
+    for session in &sessions {
+        unsafe {
+            session
+                .cast::<ISimpleAudioVolume>()?
+                .SetMasterVolume(volume.clamp(0.0, 1.0), &WIDGET_CONTEXT)?;
+        };
     }
-    Ok(!controls.is_empty())
+    Ok(!sessions.is_empty())
 }
