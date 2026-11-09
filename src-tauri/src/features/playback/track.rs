@@ -1,7 +1,7 @@
 use windows::Media::Control::GlobalSystemMediaTransportControlsSessionPlaybackStatus;
 
+use super::models::TrackInfo;
 use super::timeline::Timeline;
-use crate::features::playback::models::TrackInfo;
 use crate::shared::smtc::{active_session, source_id};
 
 pub fn get_current_track(selected: Option<&str>) -> windows::core::Result<Option<TrackInfo>> {

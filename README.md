@@ -75,11 +75,11 @@ src/                          Front React / TypeScript
     ErrorBoundary/            Repli affiché si le rendu plante (réessai automatique + bouton)
     IconButton/               Bouton rond avec icône SVG
     SmtcWidget/               Widget (titre défilant, pochette, progression, volume, contrôles, poignée)
-  constants/                  Constantes partagées, un fichier par constante (EVENTS.ts, KNOWN_ERROR_CODES.ts…)
+  constants/                  Constantes partagées, un fichier par constante (EVENTS.ts…)
   hooks/                      useCurrentTrack, useTauriEvent, useAlbumArt, useHoverPanel, useSystemColors, useVolume…
   styles/                     Variables de couleur (_colors.css), reset, styles globaux
-  types/                      Types partagés (*.types.ts) : morceau, couleurs système, erreurs…
-  utils/                      Fonctions utilitaires (*.utils.ts) : appels de commandes, couleurs système, logger, erreurs
+  types/                      Types partagés (*.types.ts) : morceau, couleurs système
+  utils/                      Fonctions utilitaires (*.utils.ts) : appels de commandes, couleurs système, classes CSS, logger
 
 src-tauri/                    Backend Rust et configuration Tauri
   tauri.conf.json             Configuration de la fenêtre et du build

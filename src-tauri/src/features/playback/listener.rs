@@ -6,7 +6,7 @@ use windows::Foundation::TypedEventHandler;
 use windows::core::RuntimeType;
 
 use super::emitter::TrackEmitter;
-use super::services::get_current_track;
+use super::track::get_current_track;
 use crate::features::audio_source::AudioSourceState;
 use crate::shared::smtc::{Session, SmtcManager, resolve_session, smtc_manager};
 

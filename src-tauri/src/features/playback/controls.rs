@@ -1,4 +1,4 @@
-use crate::features::playback::models::MediaAction;
+use super::models::MediaAction;
 use crate::shared::smtc::active_session;
 
 /// `false` si aucune session n'existe ou si la source ne supporte pas l'action.

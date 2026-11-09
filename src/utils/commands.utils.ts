@@ -1,15 +1,20 @@
 import { invoke, InvokeArgs } from "@tauri-apps/api/core";
 
-import { MediaAction } from "@/types/mediaAction.types";
 import { SystemColors } from "@/types/systemColors.types";
 import { TrackInfo } from "@/types/track.types";
 
-import { handleCommandError } from "./error.utils";
+import { logger } from "./logger.utils";
 
-/** Appelle une commande Tauri ; en cas d'échec, l'erreur est journalisée et le résultat vaut `undefined`. */
+type MediaAction = "previous" | "togglePlayPause" | "next";
+
+/**
+ * Appelle une commande Tauri ; en cas d'échec, le résultat vaut `undefined`.
+ * Le back journalise déjà le détail de l'erreur : on ne garde ici que son code (`AppError::code`).
+ */
 const call = <T = void>(command: string, args?: InvokeArgs): Promise<T | undefined> =>
-  invoke<T>(command, args).catch((error) => {
-    handleCommandError(command)(error);
+  invoke<T>(command, args).catch((error: unknown) => {
+    const code = (error as { code?: unknown } | null)?.code ?? "inconnu";
+    logger.error(`commande ${command} a échoué (${String(code)})`);
     return undefined;
   });
 

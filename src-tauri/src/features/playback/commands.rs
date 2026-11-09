@@ -1,7 +1,9 @@
 use tauri::State;
 
+use super::artwork::get_album_art;
+use super::controls::send_action;
 use super::models::{MediaAction, TrackInfo};
-use super::services::{get_album_art, get_current_track, send_action};
+use super::track::get_current_track;
 use crate::features::audio_source::AudioSourceState;
 use crate::shared::error::{AppError, AppResult};
 

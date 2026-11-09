@@ -18,11 +18,10 @@
         "shadow": false,
         "width": 250,
         "height": 40,
-        "y": 1041,
-        "x": 1400,
         "skipTaskbar": true,
         "alwaysOnTop": true,
-        "focusable": false
+        "focusable": false,
+        "visible": false
       }
     ],
     "security": {
@@ -31,12 +30,11 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": "nsis",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
       "icons/icon.ico"
     ]
   }
