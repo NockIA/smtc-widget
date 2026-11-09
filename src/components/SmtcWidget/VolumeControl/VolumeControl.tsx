@@ -15,16 +15,12 @@ const VolumeControl = ({ volume, onChange }: VolumeControlProps) => {
   useEffect(() => {
     const close = () => setOpen(false);
     document.documentElement.addEventListener("mouseleave", close);
-    return () =>
-      document.documentElement.removeEventListener("mouseleave", close);
+    return () => document.documentElement.removeEventListener("mouseleave", close);
   }, []);
 
   return (
     <div className="volume-control">
-      <IconButton
-        label={open ? "Masquer le volume" : "Volume"}
-        onClick={() => setOpen((value) => !value)}
-      >
+      <IconButton label={open ? "Masquer le volume" : "Volume"} onClick={() => setOpen((value) => !value)}>
         <path d="M11 5L6 9H2v6h4l5 4V5z" />
         <g fill="none">
           {volume === 0 ? (

@@ -13,18 +13,13 @@ const App = () => {
   });
 
   useEffect(() => {
-    const update = (track: TrackInfo | null) =>
-      setState({ track, receivedAt: performance.now() });
+    const update = (track: TrackInfo | null) => setState({ track, receivedAt: performance.now() });
 
     const fetchTrack = () =>
-      invoke<TrackInfo | null>("current_track")
-        .then(update)
-        .catch(handleCommandError("current_track"));
+      invoke<TrackInfo | null>("current_track").then(update).catch(handleCommandError("current_track"));
     fetchTrack();
 
-    const unlistenTrack = listen<TrackInfo | null>("media-changed", (event) =>
-      update(event.payload),
-    );
+    const unlistenTrack = listen<TrackInfo | null>("media-changed", (event) => update(event.payload));
 
     // Caché par une application plein écran : animations en pause, puis recalage au retour.
     const unlistenVisibility = listen<boolean>("widget-visibility", (event) => {

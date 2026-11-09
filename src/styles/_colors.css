@@ -1,22 +1,22 @@
 :root {
-    color-scheme: dark light;
+  color-scheme: dark light;
 
-    --bg: #000000;
-    --text: #ffffff;
-    --text-muted: #aaaaaa;
-    --accent: #9f8fef;
-    --surface: rgba(255, 255, 255, 0.1);
-    --surface-hover: rgba(255, 255, 255, 0.25);
-    --progress-bg: rgba(255, 255, 255, 0.15);
-    --slider-track: #444444;
+  --bg: #000000;
+  --text: #ffffff;
+  --text-muted: #aaaaaa;
+  --accent: #9f8fef;
+  --surface: rgba(255, 255, 255, 0.1);
+  --surface-hover: rgba(255, 255, 255, 0.25);
+  --progress-bg: rgba(255, 255, 255, 0.15);
+  --slider-track: #444444;
 }
 
 :root[data-bg="light"] {
-    --bg: #d5d5d5;
-    --text: #111111;
-    --text-muted: #666666;
-    --surface: rgba(0, 0, 0, 0.08);
-    --surface-hover: rgba(0, 0, 0, 0.16);
-    --progress-bg: rgba(0, 0, 0, 0.25);
-    --slider-track: #a6a6a6;
+  --bg: #d5d5d5;
+  --text: #111111;
+  --text-muted: #666666;
+  --surface: rgba(0, 0, 0, 0.08);
+  --surface-hover: rgba(0, 0, 0, 0.16);
+  --progress-bg: rgba(0, 0, 0, 0.25);
+  --slider-track: #a6a6a6;
 }

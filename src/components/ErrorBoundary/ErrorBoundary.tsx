@@ -1,8 +1,8 @@
-import { Component, ErrorInfo, PropsWithChildren } from 'react';
-import MarqueeText from '../SmtcWidget/MarqueeText/MarqueeText';
-import IconButton from '../IconButton/IconButton';
-import { logger } from '../../utils/logger';
-import './ErrorBoundary.css';
+import { Component, ErrorInfo, PropsWithChildren } from "react";
+import MarqueeText from "../SmtcWidget/MarqueeText/MarqueeText";
+import IconButton from "../IconButton/IconButton";
+import { logger } from "../../utils/logger";
+import "./ErrorBoundary.css";
 
 const RETRY_DELAY_MS = 5000;
 
@@ -20,7 +20,7 @@ export default class ErrorBoundary extends Component<PropsWithChildren, ErrorBou
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    logger.error('erreur de rendu', `${error.stack ?? error.message}${info.componentStack ?? ''}`);
+    logger.error("erreur de rendu", `${error.stack ?? error.message}${info.componentStack ?? ""}`);
     this.retryTimer = window.setTimeout(this.retry, RETRY_DELAY_MS);
   }
 

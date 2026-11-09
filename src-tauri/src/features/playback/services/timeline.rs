@@ -1,8 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::features::playback::constants::{
-    NANOS_PER_TICK, TICKS_PER_MS, WINDOWS_TO_UNIX_EPOCH_TICKS,
-};
+use crate::features::playback::constants::{NANOS_PER_TICK, TICKS_PER_MS, WINDOWS_TO_UNIX_EPOCH_TICKS};
 use crate::shared::smtc::Session;
 
 pub struct Timeline {
@@ -22,8 +20,7 @@ impl Timeline {
         let mut position = (timeline.Position()?.Duration - start).max(0);
 
         if is_playing {
-            let last_updated =
-                timeline.LastUpdatedTime()?.UniversalTime - WINDOWS_TO_UNIX_EPOCH_TICKS;
+            let last_updated = timeline.LastUpdatedTime()?.UniversalTime - WINDOWS_TO_UNIX_EPOCH_TICKS;
             position += (now_ticks() - last_updated).max(0);
         }
 

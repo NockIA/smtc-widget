@@ -23,10 +23,7 @@ fn is_secondary(primary: Option<&Monitor>, monitor: &Monitor) -> bool {
 
 /// Position par défaut : juste à gauche de ce qui occupe la droite de la barre des tâches
 /// (météo, zone de notification, horloge), sinon les marges fixes.
-pub fn default_placement(
-    window: &WebviewWindow,
-    monitor: &Monitor,
-) -> tauri::Result<MonitorPlacement> {
+pub fn default_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Result<MonitorPlacement> {
     let monitor_right = monitor.position().x + monitor.size().width as i32;
     let right_margin = match right_cluster_left(monitor) {
         Some(left) => (monitor_right - left) as f64 / monitor.scale_factor() + TASKBAR_GAP,
@@ -45,18 +42,13 @@ pub fn default_placement(
     })
 }
 
-pub fn current_placement(
-    window: &WebviewWindow,
-    monitor: &Monitor,
-) -> tauri::Result<MonitorPlacement> {
+pub fn current_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Result<MonitorPlacement> {
     let position = window.outer_position()?;
     let size = window.outer_size()?;
     let scale = monitor.scale_factor();
 
-    let right =
-        monitor.position().x + monitor.size().width as i32 - (position.x + size.width as i32);
-    let bottom =
-        monitor.position().y + monitor.size().height as i32 - (position.y + size.height as i32);
+    let right = monitor.position().x + monitor.size().width as i32 - (position.x + size.width as i32);
+    let bottom = monitor.position().y + monitor.size().height as i32 - (position.y + size.height as i32);
 
     Ok(MonitorPlacement {
         right_margin: right as f64 / scale,
@@ -64,11 +56,7 @@ pub fn current_placement(
     })
 }
 
-fn apply(
-    window: &WebviewWindow,
-    monitor: &Monitor,
-    placement: MonitorPlacement,
-) -> tauri::Result<()> {
+fn apply(window: &WebviewWindow, monitor: &Monitor, placement: MonitorPlacement) -> tauri::Result<()> {
     let size = window.outer_size()?;
     let scale = monitor.scale_factor();
     let x = monitor.position().x + monitor.size().width as i32
@@ -98,10 +86,7 @@ fn choose_monitor(window: &WebviewWindow, prefs: &Preferences) -> tauri::Result<
         .cloned())
 }
 
-pub fn place_on_preferred_monitor(
-    window: &WebviewWindow,
-    prefs: &Preferences,
-) -> tauri::Result<()> {
+pub fn place_on_preferred_monitor(window: &WebviewWindow, prefs: &Preferences) -> tauri::Result<()> {
     let Some(monitor) = choose_monitor(window, prefs)? else {
         return Ok(());
     };
@@ -144,11 +129,7 @@ pub fn list_monitors(window: &WebviewWindow) -> tauri::Result<Vec<MonitorEntry>>
 }
 
 /// Déplace la fenêtre sur l'écran `key`, à sa position sauvegardée ou par défaut.
-pub fn move_to_monitor(
-    window: &WebviewWindow,
-    prefs: &Preferences,
-    key: &str,
-) -> tauri::Result<()> {
+pub fn move_to_monitor(window: &WebviewWindow, prefs: &Preferences, key: &str) -> tauri::Result<()> {
     let monitors = window.available_monitors()?;
     let Some(monitor) = monitors.iter().find(|m| monitor_key(m) == key) else {
         return Ok(());

@@ -1,35 +1,35 @@
 *,
 *::before,
 *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
-    scroll-behavior: smooth;
+  scroll-behavior: smooth;
 }
 
 body {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 a {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 ul,
 ol {
-    list-style: none;
+  list-style: none;
 }
 
 input,
 textarea,
 select,
 button {
-    font-family: inherit;
-    font-size: inherit;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 h1,
@@ -38,11 +38,11 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: inherit;
-    margin: 0;
+  font-family: inherit;
+  margin: 0;
 }
 
 p {
-    font-family: inherit;
-    margin: 0;
+  font-family: inherit;
+  margin: 0;
 }

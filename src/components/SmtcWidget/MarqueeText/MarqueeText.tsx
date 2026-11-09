@@ -1,10 +1,4 @@
-import {
-  CSSProperties,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./MarqueeText.css";
 
 const SPEED_PX_PER_S = 40;
@@ -69,16 +63,10 @@ const MarqueeText = ({ text, hovered, className }: MarqueeTextProps) => {
 
   const active = overflowing && scrolling;
   const distance = textWidth + GAP_PX;
-  const duration = Math.max(
-    MIN_DURATION_S,
-    distance / SPEED_PX_PER_S / SCROLL_RATIO,
-  );
+  const duration = Math.max(MIN_DURATION_S, distance / SPEED_PX_PER_S / SCROLL_RATIO);
 
   return (
-    <p
-      ref={containerRef}
-      className={`marquee${active ? "" : " idle"} ${className ?? ""}`}
-    >
+    <p ref={containerRef} className={`marquee${active ? "" : " idle"} ${className ?? ""}`}>
       <span
         key={text}
         className={`marquee-track${active ? " scrolling" : ""}`}

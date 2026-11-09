@@ -14,10 +14,7 @@ export const useReservedWidth = (visible: boolean) => {
     if (!container) return;
 
     const update = () =>
-      container.style.setProperty(
-        "--actions-width",
-        `${visible && panel ? panel.offsetWidth : 0}px`,
-      );
+      container.style.setProperty("--actions-width", `${visible && panel ? panel.offsetWidth : 0}px`);
     update();
 
     if (!visible || !panel) return;

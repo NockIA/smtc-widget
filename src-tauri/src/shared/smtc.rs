@@ -37,10 +37,6 @@ pub fn all_sessions(manager: &SmtcManager) -> Vec<Session> {
 /// Session choisie par l'utilisateur si elle existe encore, sinon celle de Windows.
 pub fn resolve_session(manager: &SmtcManager, selected: Option<&str>) -> Option<Session> {
     selected
-        .and_then(|id| {
-            all_sessions(manager)
-                .into_iter()
-                .find(|s| source_id(s) == id)
-        })
+        .and_then(|id| all_sessions(manager).into_iter().find(|s| source_id(s) == id))
         .or_else(|| manager.GetCurrentSession().ok())
 }

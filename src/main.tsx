@@ -11,9 +11,7 @@ import { applyBackground } from "./utils/systemColors";
 applyBackground(null);
 
 // L'Error Boundary ne voit que les erreurs de rendu : le reste est journalisé ici.
-window.addEventListener("error", (event) =>
-  logger.error("erreur non interceptée", event.error ?? event.message),
-);
+window.addEventListener("error", (event) => logger.error("erreur non interceptée", event.error ?? event.message));
 window.addEventListener("unhandledrejection", (event) =>
   logger.error("promesse rejetée non interceptée", event.reason),
 );

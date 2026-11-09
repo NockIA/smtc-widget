@@ -1,25 +1,25 @@
 .drag-handle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 14px;
-    display: flex;
-    align-items: center;
-    padding-left: 6px;
-    color: var(--text-muted);
-    cursor: grab;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 14px;
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+  color: var(--text-muted);
+  cursor: grab;
 }
 
 .drag-handle:hover {
-    color: var(--text);
+  color: var(--text);
 }
 
 .drag-handle:active {
-    cursor: grabbing;
+  cursor: grabbing;
 }
 
 .drag-handle svg {
-    fill: currentColor;
-    pointer-events: none;
+  fill: currentColor;
+  pointer-events: none;
 }

@@ -7,13 +7,12 @@ use tauri::{Emitter, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow, Win
 use windows::Foundation::TypedEventHandler;
 use windows::UI::ViewManagement::{UIColorType, UISettings};
 use windows::Win32::Graphics::Gdi::{
-    BI_RGB, BITMAPINFO, BITMAPINFOHEADER, BitBlt, CreateCompatibleBitmap, CreateCompatibleDC,
-    DIB_RGB_COLORS, DeleteDC, DeleteObject, GetDC, GetDIBits, ReleaseDC, SRCCOPY, SelectObject,
+    BI_RGB, BITMAPINFO, BITMAPINFOHEADER, BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC,
+    DeleteObject, GetDC, GetDIBits, ReleaseDC, SRCCOPY, SelectObject,
 };
 
 use super::constants::{
-    FALLBACK_INTERVAL, MIN_SAMPLES, ROW_OFFSET_PX, SYSTEM_COLORS_EVENT, TRIGGER_DEBOUNCE,
-    WINDOW_MARGIN_PX,
+    FALLBACK_INTERVAL, MIN_SAMPLES, ROW_OFFSET_PX, SYSTEM_COLORS_EVENT, TRIGGER_DEBOUNCE, WINDOW_MARGIN_PX,
 };
 use super::models::SystemColors;
 use crate::features::window;
@@ -34,10 +33,7 @@ fn hex([r, g, b]: Rgb) -> String {
 }
 
 fn inside(position: &PhysicalPosition<i32>, size: &PhysicalSize<u32>, x: i32, y: i32) -> bool {
-    x >= position.x
-        && y >= position.y
-        && x < position.x + size.width as i32
-        && y < position.y + size.height as i32
+    x >= position.x && y >= position.y && x < position.x + size.width as i32 && y < position.y + size.height as i32
 }
 
 /// La barre des tâches occupe la différence entre l'écran et sa zone de travail.
@@ -95,14 +91,7 @@ fn capture_row(left: i32, y: i32, width: i32) -> Option<Vec<Rgb>> {
             return None;
         }
         // Pixels au format BGRA.
-        Some(
-            buffer
-                .as_chunks::<4>()
-                .0
-                .iter()
-                .map(|p| [p[2], p[1], p[0]])
-                .collect(),
-        )
+        Some(buffer.as_chunks::<4>().0.iter().map(|p| [p[2], p[1], p[0]]).collect())
     }
 }
 
@@ -141,10 +130,7 @@ fn taskbar_color(window: &WebviewWindow) -> tauri::Result<Option<String>> {
         .into_iter()
         .enumerate()
         .map(|(offset, pixel)| (left + offset as i32, pixel))
-        .filter(|&(x, _)| {
-            x < position.x - WINDOW_MARGIN_PX
-                || x > position.x + size.width as i32 + WINDOW_MARGIN_PX
-        })
+        .filter(|&(x, _)| x < position.x - WINDOW_MARGIN_PX || x > position.x + size.width as i32 + WINDOW_MARGIN_PX)
         .filter(|&(x, _)| on_taskbar(&monitor, x, y))
         .map(|(_, pixel)| pixel)
         .collect();

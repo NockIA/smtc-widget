@@ -53,13 +53,7 @@ fn taskbars() -> Vec<HWND> {
 /// Enfants directs et visibles de la barre (les descendants sont ignorés).
 fn direct_children(taskbar: HWND) -> Vec<Child> {
     let mut all: Vec<HWND> = Vec::new();
-    let _ = unsafe {
-        EnumChildWindows(
-            Some(taskbar),
-            Some(collect_child),
-            LPARAM(&mut all as *mut _ as isize),
-        )
-    };
+    let _ = unsafe { EnumChildWindows(Some(taskbar), Some(collect_child), LPARAM(&mut all as *mut _ as isize)) };
     all.into_iter()
         .filter(|&hwnd| unsafe { GetParent(hwnd) }.is_ok_and(|parent| parent == taskbar))
         .filter(|&hwnd| unsafe { IsWindowVisible(hwnd) }.as_bool())
@@ -88,9 +82,8 @@ fn on_monitor(rect: &RECT, monitor: &Monitor) -> bool {
 /// masquée automatiquement, verticale, ou structure inconnue (Windows 11).
 pub fn right_cluster_left(monitor: &Monitor) -> Option<i32> {
     let taskbar = taskbars().into_iter().find(|&hwnd| {
-        window_rect(hwnd).is_some_and(|rect| {
-            on_monitor(&rect, monitor) && rect.right - rect.left > rect.bottom - rect.top
-        })
+        window_rect(hwnd)
+            .is_some_and(|rect| on_monitor(&rect, monitor) && rect.right - rect.left > rect.bottom - rect.top)
     })?;
 
     let children = direct_children(taskbar);

@@ -36,21 +36,16 @@ struct SessionSubscription {
 impl SessionSubscription {
     fn new(session: Session, tx: &Sender<ListenerEvent>) -> windows::core::Result<Self> {
         Ok(Self {
-            media_token: session
-                .MediaPropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
-            timeline_token: session
-                .TimelinePropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
-            playback_token: session
-                .PlaybackInfoChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
+            media_token: session.MediaPropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
+            timeline_token: session.TimelinePropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
+            playback_token: session.PlaybackInfoChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
             session,
         })
     }
 
     fn cancel(self) {
         let _ = self.session.RemoveMediaPropertiesChanged(self.media_token);
-        let _ = self
-            .session
-            .RemoveTimelinePropertiesChanged(self.timeline_token);
+        let _ = self.session.RemoveTimelinePropertiesChanged(self.timeline_token);
         let _ = self.session.RemovePlaybackInfoChanged(self.playback_token);
     }
 }
@@ -80,11 +75,7 @@ fn publish(app: &AppHandle, emitter: &mut TrackEmitter) {
     }
 }
 
-fn run_listener(
-    app: AppHandle,
-    rx: Receiver<ListenerEvent>,
-    tx: Sender<ListenerEvent>,
-) -> windows::core::Result<()> {
+fn run_listener(app: AppHandle, rx: Receiver<ListenerEvent>, tx: Sender<ListenerEvent>) -> windows::core::Result<()> {
     let manager = smtc_manager()?;
     let mut subscription = None;
     let mut emitter = TrackEmitter::default();

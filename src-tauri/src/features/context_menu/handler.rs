@@ -10,10 +10,7 @@ use crate::features::preferences::{PreferencesStore, ThemePreference};
 use crate::features::window;
 
 fn set_theme(app: &AppHandle, theme: ThemePreference) {
-    if let Err(e) = app
-        .state::<PreferencesStore>()
-        .update(|prefs| prefs.theme = theme)
-    {
+    if let Err(e) = app.state::<PreferencesStore>().update(|prefs| prefs.theme = theme) {
         log::error!("sauvegarde du thème échouée : {e}");
     }
     if let Some(window) = app.get_webview_window("main")
@@ -52,14 +49,10 @@ pub fn handle_menu_event(app: &AppHandle, event: MenuEvent) {
     } else if id == AUTOSTART_ID {
         toggle_autostart(app);
     } else if let Some(source) = id.strip_prefix(SOURCE_PREFIX) {
-        app.state::<AudioSourceState>()
-            .select_source(source.to_owned());
+        app.state::<AudioSourceState>().select_source(source.to_owned());
     } else if let Some(key) = id.strip_prefix(MONITOR_PREFIX) {
         move_to_monitor(app, key);
-    } else if let Some(theme) = id
-        .strip_prefix(THEME_PREFIX)
-        .and_then(ThemePreference::from_id)
-    {
+    } else if let Some(theme) = id.strip_prefix(THEME_PREFIX).and_then(ThemePreference::from_id) {
         set_theme(app, theme);
     }
 }

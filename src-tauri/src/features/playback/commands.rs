@@ -16,9 +16,6 @@ pub async fn album_art(state: State<'_, AudioSourceState>) -> AppResult<Option<S
 }
 
 #[tauri::command]
-pub async fn media_control(
-    state: State<'_, AudioSourceState>,
-    action: MediaAction,
-) -> AppResult<bool> {
+pub async fn media_control(state: State<'_, AudioSourceState>, action: MediaAction) -> AppResult<bool> {
     send_action(state.selected().as_deref(), action).map_err(AppError::Smtc)
 }

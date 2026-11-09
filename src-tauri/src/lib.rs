@@ -24,9 +24,7 @@ pub fn run() {
         .setup(|app| {
             app.manage(PreferencesStore::load(&app.path().app_config_dir()?));
 
-            let main_window = app
-                .get_webview_window("main")
-                .ok_or("fenêtre 'main' introuvable")?;
+            let main_window = app.get_webview_window("main").ok_or("fenêtre 'main' introuvable")?;
 
             let theme = app.state::<PreferencesStore>().snapshot().theme;
             if let Err(e) = appearance::apply_theme(&main_window, theme) {

@@ -1,8 +1,6 @@
 import "./DragHandle.css";
 
-const DOTS = [1.5, 6.5, 11.5, 16.5].flatMap((cy) =>
-  [1.5, 6.5].map((cx) => ({ cx, cy })),
-);
+const DOTS = [1.5, 6.5, 11.5, 16.5].flatMap((cy) => [1.5, 6.5].map((cx) => ({ cx, cy })));
 
 const DragHandle = () => (
   <div className="drag-handle" data-tauri-drag-region title="Déplacer">

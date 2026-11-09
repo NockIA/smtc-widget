@@ -1,15 +1,15 @@
 .icon-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 3px;
-    border: none;
-    border-radius: 3px;
-    background: var(--surface);
-    color: var(--text);
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: none;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
 }
 
 .icon-button:hover {
-    background: var(--surface-hover);
+  background: var(--surface-hover);
 }

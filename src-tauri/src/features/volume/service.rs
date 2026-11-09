@@ -1,11 +1,9 @@
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::Media::Audio::{
-    IAudioSessionControl2, IAudioSessionManager2, IMMDeviceEnumerator, ISimpleAudioVolume,
-    MMDeviceEnumerator, eMultimedia, eRender,
+    IAudioSessionControl2, IAudioSessionManager2, IMMDeviceEnumerator, ISimpleAudioVolume, MMDeviceEnumerator,
+    eMultimedia, eRender,
 };
-use windows::Win32::System::Com::{
-    CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInstance, CoInitializeEx, CoUninitialize,
-};
+use windows::Win32::System::Com::{CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInstance, CoInitializeEx, CoUninitialize};
 use windows::Win32::System::Threading::{
     OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW,
 };
@@ -41,12 +39,7 @@ fn process_exe_name(pid: u32) -> Option<String> {
 
         let mut buffer = [0u16; PATH_BUFFER_LEN];
         let mut len = buffer.len() as u32;
-        let result = QueryFullProcessImageNameW(
-            handle,
-            PROCESS_NAME_WIN32,
-            PWSTR(buffer.as_mut_ptr()),
-            &mut len,
-        );
+        let result = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buffer.as_mut_ptr()), &mut len);
         let _ = CloseHandle(handle);
         result
             .inspect_err(|e| log::debug!("QueryFullProcessImageNameW({pid}) échoué : {e}"))
@@ -71,8 +64,7 @@ fn source_matches(source: &str, exe: &str) -> bool {
 
 fn source_volumes(source: &str) -> windows::core::Result<Vec<ISimpleAudioVolume>> {
     unsafe {
-        let enumerator: IMMDeviceEnumerator =
-            CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
+        let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
         let device = enumerator.GetDefaultAudioEndpoint(eRender, eMultimedia)?;
         let manager: IAudioSessionManager2 = device.Activate(CLSCTX_ALL, None)?;
         let sessions = manager.GetSessionEnumerator()?;

@@ -9,8 +9,8 @@ use windows::Win32::UI::Shell::{
     QUNS_BUSY, QUNS_PRESENTATION_MODE, QUNS_RUNNING_D3D_FULL_SCREEN, SHQueryUserNotificationState,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GetMessageW, HWND_TOPMOST, MSG, SWP_NOACTIVATE,
-    SWP_NOMOVE, SWP_NOSIZE, SetTimer, SetWindowPos, TranslateMessage, WINEVENT_OUTOFCONTEXT,
+    DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GetMessageW, HWND_TOPMOST, MSG, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+    SetTimer, SetWindowPos, TranslateMessage, WINEVENT_OUTOFCONTEXT,
 };
 
 use super::constants::{TOPMOST_FALLBACK_INTERVAL_MS, VISIBILITY_EVENT};
@@ -45,10 +45,7 @@ pub fn is_hidden() -> bool {
 
 fn is_fullscreen_app_running() -> bool {
     match unsafe { SHQueryUserNotificationState() } {
-        Ok(state) => matches!(
-            state,
-            QUNS_BUSY | QUNS_PRESENTATION_MODE | QUNS_RUNNING_D3D_FULL_SCREEN
-        ),
+        Ok(state) => matches!(state, QUNS_BUSY | QUNS_PRESENTATION_MODE | QUNS_RUNNING_D3D_FULL_SCREEN),
         // En cas d'erreur, on reste visible.
         Err(_) => false,
     }
@@ -145,12 +142,7 @@ pub fn keep_on_top(window: WebviewWindow) {
         if hook.is_invalid() {
             log::error!("SetWinEventHook a échoué");
         }
-        SetTimer(
-            None,
-            0,
-            TOPMOST_FALLBACK_INTERVAL_MS,
-            Some(on_fallback_timer),
-        );
+        SetTimer(None, 0, TOPMOST_FALLBACK_INTERVAL_MS, Some(on_fallback_timer));
 
         refresh();
 

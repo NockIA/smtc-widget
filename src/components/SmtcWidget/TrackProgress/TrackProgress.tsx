@@ -20,10 +20,7 @@ const TrackProgress = ({ track, receivedAt }: TrackProgressProps) => {
 
     const render = () => {
       const elapsed = track.isPlaying ? performance.now() - receivedAt : 0;
-      const progress = Math.min(
-        1,
-        (track.positionMs + elapsed) / track.durationMs,
-      );
+      const progress = Math.min(1, (track.positionMs + elapsed) / track.durationMs);
       bar.style.transform = `scaleX(${progress})`;
     };
     render();
@@ -31,8 +28,7 @@ const TrackProgress = ({ track, receivedAt }: TrackProgressProps) => {
     if (!track.isPlaying) return;
     const id = window.setInterval(() => {
       // Widget caché par une application plein écran : rien à dessiner.
-      if (!document.documentElement.classList.contains("widget-hidden"))
-        render();
+      if (!document.documentElement.classList.contains("widget-hidden")) render();
     }, UPDATE_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, [track, receivedAt]);

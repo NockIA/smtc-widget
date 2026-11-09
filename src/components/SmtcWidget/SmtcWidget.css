@@ -1,110 +1,107 @@
 .smtc-widget {
-    --progress-height: 2.5px;
-    --widget-padding-x: 10px;
-    /* Zone de fondu à gauche du panneau d'actions. */
-    --actions-fade: 24px;
+  --progress-height: 2.5px;
+  --widget-padding-x: 10px;
+  /* Zone de fondu à gauche du panneau d'actions. */
+  --actions-fade: 24px;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: start;
-    width: 100vw;
-    height: 100vh;
-    border-radius: 3px;
-    background: var(--bg);
-    overflow: hidden;
-    position: relative;
-    padding: 1px var(--widget-padding-x);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 3px;
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+  padding: 1px var(--widget-padding-x);
 }
 
 .widget-content {
-    --content-left: 0px;
-    /* Le texte s'arrête où commence le fondu du panneau d'actions, au lieu de passer dessous. */
-    --content-right: max(
-        0px,
-        calc(var(--actions-width, 0px) - var(--widget-padding-x) - var(--actions-fade))
-    );
+  --content-left: 0px;
+  /* Le texte s'arrête où commence le fondu du panneau d'actions, au lieu de passer dessous. */
+  --content-right: max(0px, calc(var(--actions-width, 0px) - var(--widget-padding-x) - var(--actions-fade)));
 
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    margin-left: var(--content-left);
-    max-width: calc(100% - var(--content-left) - var(--content-right));
-    transition:
-        margin-left 0.25s ease,
-        max-width 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: var(--content-left);
+  max-width: calc(100% - var(--content-left) - var(--content-right));
+  transition:
+    margin-left 0.25s ease,
+    max-width 0.25s ease;
 }
 
 .widget-content.shifted {
-    --content-left: 14px;
+  --content-left: 14px;
 }
 
 .track-text {
-    min-width: 0;
+  min-width: 0;
 }
 
 .album-art {
-    flex: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 3px;
-    object-fit: cover;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 3px;
+  object-fit: cover;
 }
 
 .track-title {
-    font-weight: 500;
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .track-footer {
-    font-weight: 400;
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: -8px;
-    white-space: nowrap;
-    overflow: hidden;
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -8px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .widget-actions {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0 8px 0 var(--actions-fade);
-    background: linear-gradient(to right, transparent, var(--bg) 20px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 var(--actions-fade);
+  background: linear-gradient(to right, transparent, var(--bg) 20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
 }
 
 .widget-actions.visible {
-    opacity: 1;
-    pointer-events: auto;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .widget-handle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: var(--progress-height);
-    width: 14px;
-    background: var(--bg);
-    transform: translateX(-100%);
-    opacity: 0;
-    pointer-events: none;
-    transition:
-        transform 0.25s ease,
-        opacity 0.25s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: var(--progress-height);
+  width: 14px;
+  background: var(--bg);
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
 }
 
 .widget-handle.visible {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: auto;
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }

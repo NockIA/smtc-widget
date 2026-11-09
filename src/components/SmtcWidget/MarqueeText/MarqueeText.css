@@ -1,37 +1,37 @@
 .marquee-track {
-    display: inline-block;
-    white-space: nowrap;
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .marquee-item {
-    display: inline-block;
+  display: inline-block;
 }
 
 /* Au repos, le texte coupé se termine par des points de suspension. */
 .marquee.idle {
-    text-overflow: ellipsis;
+  text-overflow: ellipsis;
 }
 
 .marquee.idle .marquee-track,
 .marquee.idle .marquee-item {
-    display: inline;
+  display: inline;
 }
 
 .marquee-track.scrolling .marquee-item {
-    margin-right: var(--marquee-gap);
+  margin-right: var(--marquee-gap);
 }
 
 .marquee-track.scrolling {
-    will-change: transform;
-    animation: marquee var(--marquee-duration) linear infinite;
+  will-change: transform;
+  animation: marquee var(--marquee-duration) linear infinite;
 }
 
 @keyframes marquee {
-    0%,
-    15% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(calc(-1 * var(--marquee-distance)));
-    }
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-1 * var(--marquee-distance)));
+  }
 }

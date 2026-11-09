@@ -21,9 +21,7 @@ const SmtcWidget = ({ track, receivedAt }: SmtcWidgetProps) => {
   const { volume, setVolume, refresh } = useVolume(track?.source);
   const panels = useHoverPanel(3000);
   const albumArt = useAlbumArt(track, receivedAt);
-  const { containerRef, panelRef } = useReservedWidth(
-    panels.visible && track !== null,
-  );
+  const { containerRef, panelRef } = useReservedWidth(panels.visible && track !== null);
 
   return (
     <div
@@ -32,16 +30,12 @@ const SmtcWidget = ({ track, receivedAt }: SmtcWidgetProps) => {
       onMouseEnter={() => {
         refresh();
         panels.onMouseEnter();
-        invoke("refresh_system_colors").catch(
-          handleCommandError("refresh_system_colors"),
-        );
+        invoke("refresh_system_colors").catch(handleCommandError("refresh_system_colors"));
       }}
       onMouseLeave={panels.onMouseLeave}
       onContextMenu={(event) => {
         event.preventDefault();
-        invoke("show_context_menu", { x: event.clientX }).catch(
-          handleCommandError("show_context_menu"),
-        );
+        invoke("show_context_menu", { x: event.clientX }).catch(handleCommandError("show_context_menu"));
       }}
     >
       <div className={`widget-handle${panels.visible ? " visible" : ""}`}>
@@ -54,11 +48,7 @@ const SmtcWidget = ({ track, receivedAt }: SmtcWidgetProps) => {
             <p className="track-title">Aucun morceau détecté</p>
           ) : (
             <>
-              <MarqueeText
-                className="track-title"
-                text={track.title}
-                hovered={panels.visible}
-              />
+              <MarqueeText className="track-title" text={track.title} hovered={panels.visible} />
               <MarqueeText
                 hovered={panels.visible}
                 className="track-footer"
@@ -69,19 +59,12 @@ const SmtcWidget = ({ track, receivedAt }: SmtcWidgetProps) => {
         </div>
       </div>
       {track !== null && (
-        <div
-          ref={panelRef}
-          className={`widget-actions${panels.visible ? " visible" : ""}`}
-        >
+        <div ref={panelRef} className={`widget-actions${panels.visible ? " visible" : ""}`}>
           <MediaControls isPlaying={track.isPlaying} />
-          {volume !== null && (
-            <VolumeControl volume={volume} onChange={setVolume} />
-          )}
+          {volume !== null && <VolumeControl volume={volume} onChange={setVolume} />}
         </div>
       )}
-      {track !== null && track.durationMs > 0 && (
-        <TrackProgress track={track} receivedAt={receivedAt} />
-      )}
+      {track !== null && track.durationMs > 0 && <TrackProgress track={track} receivedAt={receivedAt} />}
     </div>
   );
 };

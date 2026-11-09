@@ -8,12 +8,7 @@ interface IconButtonProps {
 }
 
 const IconButton = ({ label, onClick, children }: IconButtonProps) => (
-  <button
-    className="icon-button"
-    title={label}
-    aria-label={label}
-    onClick={onClick}
-  >
+  <button className="icon-button" title={label} aria-label={label} onClick={onClick}>
     <svg
       width="14"
       height="14"

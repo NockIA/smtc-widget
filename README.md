@@ -25,21 +25,24 @@ La première compilation Rust est longue (plusieurs minutes). Un changement de `
 
 ## Commandes utiles
 
-| Commande                             | Rôle                                                                                                             |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `npm run tauri dev`                  | Lance l'app en mode développement                                                                                |
-| `npm run tauri build`                | Exécutable (`src-tauri/target/release/smtc-widget.exe`) et installateurs (`src-tauri/target/release/bundle/`) |
-| `npm run tauri build -- --no-bundle` | Exécutable seul, sans installateur : plus rapide (mesures, tests en release)                                     |
-| `npm run dev`                        | Lance seulement le front dans le navigateur (sans Tauri)                                                         |
-| `npm run build`                      | Vérifie les types et construit le front                                                                          |
+| Commande                             | Rôle                                                                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `npm run tauri dev`                  | Lance l'app en mode développement                                                                                    |
+| `npm run tauri build`                | Exécutable (`src-tauri/target/release/smtc-widget.exe`) et installateurs (`src-tauri/target/release/bundle/`)        |
+| `npm run tauri build -- --no-bundle` | Exécutable seul, sans installateur : plus rapide (mesures, tests en release)                                         |
+| `npm run dev`                        | Lance seulement le front dans le navigateur (sans Tauri)                                                             |
+| `npm run build`                      | Vérifie les types et construit le front                                                                              |
+| `npm run format`                     | Formate le front et les fichiers de la racine avec Prettier (config : `.prettierrc`, exclusions : `.prettierignore`) |
+| `npm run format:check`               | Vérifie le formatage sans rien modifier (code de sortie non nul si un fichier diffère)                               |
 
 Côté Rust, depuis `src-tauri/` :
 
-| Commande       | Rôle                                      |
-| -------------- | ----------------------------------------- |
-| `cargo check`  | Compile sans produire de binaire (rapide) |
-| `cargo clippy` | Linter Rust                               |
-| `cargo fmt`    | Formate le code                           |
+| Commande            | Rôle                                      |
+| ------------------- | ----------------------------------------- |
+| `cargo check`       | Compile sans produire de binaire (rapide) |
+| `cargo clippy`      | Linter Rust                               |
+| `cargo fmt`         | Formate le code (config : `rustfmt.toml`) |
+| `cargo fmt --check` | Vérifie le formatage sans rien modifier   |
 
 ## En cas d'erreur : journal de log
 
@@ -99,4 +102,3 @@ Dans chaque feature, les fichiers sont répartis par rôle : `models.rs` (types)
 ## Environnement de développement conseillé
 
 - [Zed](https://zed.dev/) avec l'extension Rust (rust-analyzer est intégré)
-
