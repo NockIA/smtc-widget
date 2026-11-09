@@ -7,9 +7,3 @@ export interface TrackInfo {
   isPlaying: boolean;
   source: string;
 }
-
-export interface TrackState {
-  track: TrackInfo | null;
-  /** performance.now() à la réception, pour interpoler la progression. */
-  receivedAt: number;
-}

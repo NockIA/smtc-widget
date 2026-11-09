@@ -1,14 +1,19 @@
 use std::sync::mpsc::{self, Receiver, Sender};
+use std::time::Duration;
 
 use tauri::{AppHandle, Manager};
 use windows::Foundation::TypedEventHandler;
+use windows::core::RuntimeType;
 
-use super::constants::EVENT_DEBOUNCE;
 use super::emitter::TrackEmitter;
 use super::services::get_current_track;
 use crate::features::audio_source::AudioSourceState;
 use crate::shared::smtc::{Session, SmtcManager, resolve_session, smtc_manager};
 
+/// Attente après le dernier événement SMTC avant de relire le morceau (regroupe les rafales).
+const EVENT_DEBOUNCE: Duration = Duration::from_millis(100);
+
+#[derive(Clone, Copy)]
 enum ListenerEvent {
     /// La source ou la liste des sessions a changé : se réabonner.
     Resubscribe,
@@ -16,14 +21,15 @@ enum ListenerEvent {
     TrackChanged,
 }
 
-macro_rules! send_on_event {
-    ($tx:expr, $event:expr) => {{
-        let tx = $tx.clone();
-        TypedEventHandler::new(move |_, _| {
-            let _ = tx.send($event);
-            Ok(())
-        })
-    }};
+fn notify<S: RuntimeType + 'static, R: RuntimeType + 'static>(
+    tx: &Sender<ListenerEvent>,
+    event: ListenerEvent,
+) -> TypedEventHandler<S, R> {
+    let tx = tx.clone();
+    TypedEventHandler::new(move |_, _| {
+        let _ = tx.send(event);
+        Ok(())
+    })
 }
 
 struct SessionSubscription {
@@ -36,9 +42,9 @@ struct SessionSubscription {
 impl SessionSubscription {
     fn new(session: Session, tx: &Sender<ListenerEvent>) -> windows::core::Result<Self> {
         Ok(Self {
-            media_token: session.MediaPropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
-            timeline_token: session.TimelinePropertiesChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
-            playback_token: session.PlaybackInfoChanged(&send_on_event!(tx, ListenerEvent::TrackChanged))?,
+            media_token: session.MediaPropertiesChanged(&notify(tx, ListenerEvent::TrackChanged))?,
+            timeline_token: session.TimelinePropertiesChanged(&notify(tx, ListenerEvent::TrackChanged))?,
+            playback_token: session.PlaybackInfoChanged(&notify(tx, ListenerEvent::TrackChanged))?,
             session,
         })
     }
@@ -80,8 +86,8 @@ fn run_listener(app: AppHandle, rx: Receiver<ListenerEvent>, tx: Sender<Listener
     let mut subscription = None;
     let mut emitter = TrackEmitter::default();
 
-    manager.CurrentSessionChanged(&send_on_event!(tx, ListenerEvent::Resubscribe))?;
-    manager.SessionsChanged(&send_on_event!(tx, ListenerEvent::Resubscribe))?;
+    manager.CurrentSessionChanged(&notify(&tx, ListenerEvent::Resubscribe))?;
+    manager.SessionsChanged(&notify(&tx, ListenerEvent::Resubscribe))?;
 
     resubscribe(&manager, &app, &tx, &mut subscription)?;
     publish(&app, &mut emitter);

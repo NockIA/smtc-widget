@@ -2,7 +2,7 @@ use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager, WebviewWindow, Wry};
 use tauri_plugin_autostart::ManagerExt;
 
-use super::constants::{AUTOSTART_ID, MONITOR_PREFIX, QUIT_ID, SOURCE_PREFIX, THEME_PREFIX};
+use super::action::MenuAction;
 use crate::features::audio_source::{self, AudioSourceState};
 use crate::features::preferences::{PreferencesStore, ThemePreference};
 use crate::features::window;
@@ -16,20 +16,18 @@ fn theme_label(theme: ThemePreference) -> &'static str {
     }
 }
 
+fn check_item(app: &AppHandle, action: &MenuAction, label: &str, checked: bool) -> tauri::Result<CheckMenuItem<Wry>> {
+    CheckMenuItem::with_id(app, action.id(), label, true, checked, None::<&str>)
+}
+
 fn source_submenu(app: &AppHandle) -> AppResult<Submenu<Wry>> {
     let selected = app.state::<AudioSourceState>().selected();
     let sources = audio_source::list_sources(selected.as_deref()).map_err(AppError::Smtc)?;
 
     let menu = Submenu::new(app, "Piste audio", !sources.is_empty())?;
-    for source in &sources {
-        menu.append(&CheckMenuItem::with_id(
-            app,
-            format!("{SOURCE_PREFIX}{}", source.id),
-            &source.label,
-            true,
-            source.active,
-            None::<&str>,
-        )?)?;
+    for source in sources {
+        let action = MenuAction::Source(source.id);
+        menu.append(&check_item(app, &action, &source.label, source.active)?)?;
     }
     Ok(menu)
 }
@@ -38,15 +36,9 @@ fn monitor_submenu(app: &AppHandle, window: &WebviewWindow) -> AppResult<Submenu
     let monitors = window::list_monitors(window)?;
 
     let menu = Submenu::new(app, "Déplacer vers", monitors.len() > 1)?;
-    for monitor in &monitors {
-        menu.append(&CheckMenuItem::with_id(
-            app,
-            format!("{MONITOR_PREFIX}{}", monitor.key),
-            &monitor.label,
-            true,
-            monitor.current,
-            None::<&str>,
-        )?)?;
+    for monitor in monitors {
+        let action = MenuAction::Monitor(monitor.key);
+        menu.append(&check_item(app, &action, &monitor.label, monitor.current)?)?;
     }
     Ok(menu)
 }
@@ -56,19 +48,15 @@ fn theme_submenu(app: &AppHandle) -> AppResult<Submenu<Wry>> {
 
     let menu = Submenu::new(app, "Thème", true)?;
     for theme in ThemePreference::ALL {
-        menu.append(&CheckMenuItem::with_id(
-            app,
-            format!("{THEME_PREFIX}{}", theme.id()),
-            theme_label(theme),
-            true,
-            theme == current,
-            None::<&str>,
-        )?)?;
+        let action = MenuAction::Theme(theme);
+        menu.append(&check_item(app, &action, theme_label(theme), theme == current)?)?;
     }
     Ok(menu)
 }
 
 pub fn build_menu(app: &AppHandle, window: &WebviewWindow) -> AppResult<Menu<Wry>> {
+    let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
+
     Ok(Menu::with_items(
         app,
         &[
@@ -76,15 +64,8 @@ pub fn build_menu(app: &AppHandle, window: &WebviewWindow) -> AppResult<Menu<Wry
             &monitor_submenu(app, window)?,
             &theme_submenu(app)?,
             &PredefinedMenuItem::separator(app)?,
-            &CheckMenuItem::with_id(
-                app,
-                AUTOSTART_ID,
-                "Lancer au démarrage",
-                true,
-                app.autolaunch().is_enabled().unwrap_or(false),
-                None::<&str>,
-            )?,
-            &MenuItem::with_id(app, QUIT_ID, "Quitter", true, None::<&str>)?,
+            &check_item(app, &MenuAction::Autostart, "Lancer au démarrage", autostart_enabled)?,
+            &MenuItem::with_id(app, MenuAction::Quit.id(), "Quitter", true, None::<&str>)?,
         ],
     )?)
 }

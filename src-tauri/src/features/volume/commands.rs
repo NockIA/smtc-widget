@@ -4,7 +4,6 @@ use super::service;
 use crate::features::audio_source::AudioSourceState;
 use crate::shared::error::{AppError, AppResult};
 
-/// Volume (0.0 à 1.0) de la source courante, `None` si aucune session audio ne correspond.
 #[tauri::command]
 pub async fn get_volume(state: State<'_, AudioSourceState>) -> AppResult<Option<f32>> {
     service::get_volume(state.selected().as_deref()).map_err(AppError::Audio)

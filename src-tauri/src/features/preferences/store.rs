@@ -2,8 +2,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::{fs, io};
 
-use super::constants::PREFERENCES_FILE;
 use super::models::Preferences;
+
+const PREFERENCES_FILE: &str = "preferences.json";
 
 /// Préférences partagées entre threads : un seul verrou, un seul fichier.
 pub struct PreferencesStore {

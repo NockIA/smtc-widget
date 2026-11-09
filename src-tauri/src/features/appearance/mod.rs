@@ -1,5 +1,4 @@
 pub mod commands;
-mod constants;
 mod models;
 mod system_colors;
 mod theme;

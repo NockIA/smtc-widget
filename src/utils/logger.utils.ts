@@ -10,14 +10,15 @@ const describe = (value: unknown): string => {
   }
 };
 
-/** Écrit dans le fichier de log de l'app */
+const createLogger =
+  (write: (message: string) => Promise<void>, fallback: (message: string) => void) =>
+  (message: string, cause?: unknown) => {
+    const text = cause === undefined ? message : `${message} : ${describe(cause)}`;
+    write(`[front] ${text}`).catch(() => fallback(text));
+  };
+
+/** Écrit dans le fichier de log de l'app. */
 export const logger = {
-  error: (message: string, cause?: unknown) => {
-    const text = cause === undefined ? message : `${message} : ${describe(cause)}`;
-    logError(`[front] ${text}`).catch(() => console.error(text));
-  },
-  warn: (message: string, cause?: unknown) => {
-    const text = cause === undefined ? message : `${message} : ${describe(cause)}`;
-    logWarn(`[front] ${text}`).catch(() => console.warn(text));
-  },
+  error: createLogger(logError, (text) => console.error(text)),
+  warn: createLogger(logWarn, (text) => console.warn(text)),
 };

@@ -1,13 +1,15 @@
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
 
 use tauri::{Manager, WebviewWindow, WindowEvent};
 
-use super::constants::SAVE_DEBOUNCE;
 use super::layout;
 use super::placement::{current_placement, default_placement, monitor_key};
 use crate::features::preferences::PreferencesStore;
 use crate::shared::error::AppResult;
+
+const SAVE_DEBOUNCE: Duration = Duration::from_millis(500);
 
 /// Une position identique à celle par défaut supprime la préférence de l'écran.
 fn save_current_position(window: &WebviewWindow) -> AppResult<()> {
@@ -46,7 +48,7 @@ pub fn track_moves(window: WebviewWindow) {
             while rx.recv_timeout(SAVE_DEBOUNCE).is_ok() {}
 
             if let Err(e) = save_current_position(&window) {
-                log::error!("sauvegarde de la position échouée : {e}");
+                log::error!("sauvegarde de la position a échoué : {e}");
             }
         }
     });

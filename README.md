@@ -34,15 +34,16 @@ La première compilation Rust est longue (plusieurs minutes). Un changement de `
 | `npm run build`                      | Vérifie les types et construit le front                                                                              |
 | `npm run format`                     | Formate le front et les fichiers de la racine avec Prettier (config : `.prettierrc`, exclusions : `.prettierignore`) |
 | `npm run format:check`               | Vérifie le formatage sans rien modifier (code de sortie non nul si un fichier diffère)                               |
+| `npm run lint`                       | Linter ESLint (config : `eslint.config.js`) ; `npm run lint:fix` applique les corrections automatiques               |
 
 Côté Rust, depuis `src-tauri/` :
 
-| Commande            | Rôle                                      |
-| ------------------- | ----------------------------------------- |
-| `cargo check`       | Compile sans produire de binaire (rapide) |
-| `cargo clippy`      | Linter Rust                               |
-| `cargo fmt`         | Formate le code (config : `rustfmt.toml`) |
-| `cargo fmt --check` | Vérifie le formatage sans rien modifier   |
+| Commande            | Rôle                                             |
+| ------------------- | ------------------------------------------------ |
+| `cargo check`       | Compile sans produire de binaire (rapide)        |
+| `cargo clippy`      | Linter Rust (lints configurés dans `Cargo.toml`) |
+| `cargo fmt`         | Formate le code (config : `rustfmt.toml`)        |
+| `cargo fmt --check` | Vérifie le formatage sans rien modifier          |
 
 ## En cas d'erreur : journal de log
 
@@ -68,17 +69,17 @@ sa logique et ses commandes Tauri.
 
 ```
 src/                          Front React / TypeScript
-  App.tsx                     Écoute des événements du backend (morceau, couleurs, visibilité)
+  App.tsx                     Relie le morceau courant et la visibilité au widget
   assets/icons/               Icônes SVG (importées comme composants via SVGR, couleur héritée du thème)
   components/
     ErrorBoundary/            Repli affiché si le rendu plante (réessai automatique + bouton)
     IconButton/               Bouton rond avec icône SVG
     SmtcWidget/               Widget (titre défilant, pochette, progression, volume, contrôles, poignée)
-  constants/                  Constantes (ERROR_CODES.ts)
-  hooks/                      useAlbumArt, useHoverPanel, useSystemColors, useVolume
+  constants/                  Constantes partagées, un fichier par constante (EVENTS.ts, KNOWN_ERROR_CODES.ts…)
+  hooks/                      useCurrentTrack, useTauriEvent, useAlbumArt, useHoverPanel, useSystemColors, useVolume…
   styles/                     Variables de couleur (_colors.css), reset, styles globaux
-  types/                      Types partagés avec le backend (morceau, couleurs système)
-  utils/                      Couleurs système (fond, accent), logger, gestion des erreurs de commandes
+  types/                      Types partagés (*.types.ts) : morceau, couleurs système, erreurs…
+  utils/                      Fonctions utilitaires (*.utils.ts) : appels de commandes, couleurs système, logger, erreurs
 
 src-tauri/                    Backend Rust et configuration Tauri
   tauri.conf.json             Configuration de la fenêtre et du build
@@ -97,8 +98,14 @@ src-tauri/                    Backend Rust et configuration Tauri
 ```
 
 Dans chaque feature, les fichiers sont répartis par rôle : `models.rs` (types),
-`service.rs` ou `services/` (logique), `commands.rs` (commandes Tauri), `state.rs` (état partagé),
-`constants.rs` (constantes).
+`service.rs` ou `services/` (logique), `commands.rs` (commandes Tauri), `state.rs` (état partagé).
+Les constantes restent en tête du fichier qui les utilise.
+
+## Conventions front
+
+- `*.utils.ts` : fonctions utilitaires ; `*.types.ts` : types partagés ; `<CONSTANTE>.ts` : une constante partagée par fichier.
+- Imports : alias `@/` pour tout ce qui remonte dans l'arborescence, ordre vérifié par `npm run lint`.
+- Les appels au backend passent uniquement par `commands` (`utils/commands.utils.ts`).
 
 ## Environnement de développement conseillé
 

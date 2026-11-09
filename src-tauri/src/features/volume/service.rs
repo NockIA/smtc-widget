@@ -1,16 +1,15 @@
-use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::Media::Audio::{
     IAudioSessionControl2, IAudioSessionManager2, IMMDeviceEnumerator, ISimpleAudioVolume, MMDeviceEnumerator,
     eMultimedia, eRender,
 };
 use windows::Win32::System::Com::{CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInstance, CoInitializeEx, CoUninitialize};
-use windows::Win32::System::Threading::{
-    OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW,
-};
-use windows::core::{Interface, PWSTR};
+use windows::core::Interface;
 
-use super::constants::{MIN_EXE_STEM_LEN, PATH_BUFFER_LEN};
-use crate::shared::smtc::{resolve_session, smtc_manager, source_id};
+use super::process;
+use crate::shared::smtc::{active_session, source_id};
+
+/// Évite les faux positifs avec des noms d'exécutable très courts.
+const MIN_EXE_STEM_LEN: usize = 3;
 
 struct ComGuard(bool);
 
@@ -27,26 +26,6 @@ impl Drop for ComGuard {
         if self.0 {
             unsafe { CoUninitialize() };
         }
-    }
-}
-
-fn process_exe_name(pid: u32) -> Option<String> {
-    unsafe {
-        // Processus protégé ou déjà terminé : normal, on passe à la session suivante.
-        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)
-            .inspect_err(|e| log::debug!("OpenProcess({pid}) refusé : {e}"))
-            .ok()?;
-
-        let mut buffer = [0u16; PATH_BUFFER_LEN];
-        let mut len = buffer.len() as u32;
-        let result = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buffer.as_mut_ptr()), &mut len);
-        let _ = CloseHandle(handle);
-        result
-            .inspect_err(|e| log::debug!("QueryFullProcessImageNameW({pid}) échoué : {e}"))
-            .ok()?;
-
-        let path = String::from_utf16_lossy(&buffer[..len as usize]);
-        path.rsplit('\\').next().map(str::to_owned)
     }
 }
 
@@ -76,7 +55,7 @@ fn source_volumes(source: &str) -> windows::core::Result<Vec<ISimpleAudioVolume>
             if pid == 0 {
                 continue;
             }
-            let Some(exe) = process_exe_name(pid) else {
+            let Some(exe) = process::exe_name(pid) else {
                 continue;
             };
             if source_matches(source, &exe) {
@@ -88,8 +67,7 @@ fn source_volumes(source: &str) -> windows::core::Result<Vec<ISimpleAudioVolume>
 }
 
 fn current_source(selected: Option<&str>) -> windows::core::Result<Option<String>> {
-    let manager = smtc_manager()?;
-    Ok(resolve_session(&manager, selected).map(|session| source_id(&session)))
+    Ok(active_session(selected)?.map(|session| source_id(&session)))
 }
 
 /// Volume (0.0 à 1.0) de la source courante, `None` si aucune session audio ne correspond.

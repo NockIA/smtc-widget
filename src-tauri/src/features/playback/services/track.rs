@@ -2,12 +2,10 @@ use windows::Media::Control::GlobalSystemMediaTransportControlsSessionPlaybackSt
 
 use super::timeline::Timeline;
 use crate::features::playback::models::TrackInfo;
-use crate::shared::smtc::{resolve_session, smtc_manager, source_id};
+use crate::shared::smtc::{active_session, source_id};
 
 pub fn get_current_track(selected: Option<&str>) -> windows::core::Result<Option<TrackInfo>> {
-    let manager = smtc_manager()?;
-
-    let Some(session) = resolve_session(&manager, selected) else {
+    let Some(session) = active_session(selected)? else {
         return Ok(None);
     };
 

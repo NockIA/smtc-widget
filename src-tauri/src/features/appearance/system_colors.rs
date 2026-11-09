@@ -2,6 +2,7 @@ use std::ffi::c_void;
 use std::sync::OnceLock;
 use std::sync::mpsc::{self, RecvTimeoutError, Sender};
 use std::thread;
+use std::time::Duration;
 
 use tauri::{Emitter, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow, WindowEvent};
 use windows::Foundation::TypedEventHandler;
@@ -11,11 +12,23 @@ use windows::Win32::Graphics::Gdi::{
     DeleteObject, GetDC, GetDIBits, ReleaseDC, SRCCOPY, SelectObject,
 };
 
-use super::constants::{
-    FALLBACK_INTERVAL, MIN_SAMPLES, ROW_OFFSET_PX, SYSTEM_COLORS_EVENT, TRIGGER_DEBOUNCE, WINDOW_MARGIN_PX,
-};
 use super::models::SystemColors;
 use crate::features::window;
+
+const MIN_SAMPLES: usize = 3;
+/// Distance minimale entre un point d'échantillonnage et le widget, qui recouvre la barre.
+const WINDOW_MARGIN_PX: i32 = 8;
+/// Les points sont pris sur une ligne proche du bord de la barre, là où il y a le moins d'icônes.
+const ROW_OFFSET_PX: i32 = 3;
+
+/// Attente après le dernier déclencheur avant de relire les couleurs.
+const TRIGGER_DEBOUNCE: Duration = Duration::from_millis(300);
+
+/// Contrôle de secours (changement de fond d'écran, transparence de la barre).
+const FALLBACK_INTERVAL: Duration = Duration::from_secs(60);
+
+/// Nom de l'événement écouté par le front.
+const SYSTEM_COLORS_EVENT: &str = "system-colors";
 
 type Rgb = [u8; 3];
 
@@ -32,14 +45,14 @@ fn hex([r, g, b]: Rgb) -> String {
     format!("#{r:02x}{g:02x}{b:02x}")
 }
 
-fn inside(position: &PhysicalPosition<i32>, size: &PhysicalSize<u32>, x: i32, y: i32) -> bool {
+fn inside(position: PhysicalPosition<i32>, size: PhysicalSize<u32>, x: i32, y: i32) -> bool {
     x >= position.x && y >= position.y && x < position.x + size.width as i32 && y < position.y + size.height as i32
 }
 
 /// La barre des tâches occupe la différence entre l'écran et sa zone de travail.
 fn on_taskbar(monitor: &Monitor, x: i32, y: i32) -> bool {
     let work = monitor.work_area();
-    inside(monitor.position(), monitor.size(), x, y) && !inside(&work.position, &work.size, x, y)
+    inside(*monitor.position(), *monitor.size(), x, y) && !inside(work.position, work.size, x, y)
 }
 
 /// Capture une ligne d'écran de 1 px de haut en une seule copie (au lieu d'un `GetPixel` par point).
@@ -181,7 +194,7 @@ pub fn watch(window: WebviewWindow) {
                 Ok(())
             });
             if let Err(e) = settings.ColorValuesChanged(&handler) {
-                log::error!("abonnement aux couleurs Windows échoué : {e}");
+                log::error!("abonnement aux couleurs Windows a échoué : {e}");
             }
         }
 
@@ -196,7 +209,7 @@ pub fn watch(window: WebviewWindow) {
                         last = Some(colors);
                     }
                     Ok(_) => {}
-                    Err(e) => log::error!("lecture des couleurs système échouée : {e}"),
+                    Err(e) => log::error!("lecture des couleurs système a échoué : {e}"),
                 }
             }
 

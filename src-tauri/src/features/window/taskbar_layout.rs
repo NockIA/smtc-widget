@@ -1,16 +1,18 @@
 use tauri::Monitor;
 
-use super::constants::WEATHER_INNER_PADDING;
 use windows::Win32::Foundation::{HWND, LPARAM, RECT};
 use windows::Win32::UI::WindowsAndMessaging::{
     EnumChildWindows, EnumWindows, GetClassNameW, GetParent, GetWindowRect, IsWindowVisible,
 };
 use windows::core::BOOL;
 
+/// Marge vide (pixels logiques) entre le bord gauche de la fenêtre météo et son icône.
+const WEATHER_INNER_PADDING: f64 = 12.0;
+
 const TASKBAR_CLASSES: [&str; 2] = ["Shell_TrayWnd", "Shell_SecondaryTrayWnd"];
 /// Conteneur des boutons d'applications (barre principale / barres secondaires).
 const TASK_LIST_CLASSES: [&str; 2] = ["ReBarWindow32", "WorkerW"];
-/// Widget météo de Windows 10 (DynamicContent1, DynamicContent2…).
+/// Widget météo de Windows 10 (`DynamicContent1`, `DynamicContent2`…).
 const WEATHER_CLASS_PREFIX: &str = "DynamicContent";
 
 struct Child {
@@ -46,14 +48,20 @@ unsafe extern "system" fn collect_child(hwnd: HWND, list: LPARAM) -> BOOL {
 
 fn taskbars() -> Vec<HWND> {
     let mut list: Vec<HWND> = Vec::new();
-    let _ = unsafe { EnumWindows(Some(collect_taskbar), LPARAM(&mut list as *mut _ as isize)) };
+    let _ = unsafe { EnumWindows(Some(collect_taskbar), LPARAM(std::ptr::from_mut(&mut list) as isize)) };
     list
 }
 
 /// Enfants directs et visibles de la barre (les descendants sont ignorés).
 fn direct_children(taskbar: HWND) -> Vec<Child> {
     let mut all: Vec<HWND> = Vec::new();
-    let _ = unsafe { EnumChildWindows(Some(taskbar), Some(collect_child), LPARAM(&mut all as *mut _ as isize)) };
+    let _ = unsafe {
+        EnumChildWindows(
+            Some(taskbar),
+            Some(collect_child),
+            LPARAM(std::ptr::from_mut(&mut all) as isize),
+        )
+    };
     all.into_iter()
         .filter(|&hwnd| unsafe { GetParent(hwnd) }.is_ok_and(|parent| parent == taskbar))
         .filter(|&hwnd| unsafe { IsWindowVisible(hwnd) }.as_bool())
@@ -67,8 +75,8 @@ fn direct_children(taskbar: HWND) -> Vec<Child> {
 }
 
 fn on_monitor(rect: &RECT, monitor: &Monitor) -> bool {
-    let center_x = (rect.left + rect.right) / 2;
-    let center_y = (rect.top + rect.bottom) / 2;
+    let center_x = i32::midpoint(rect.left, rect.right);
+    let center_y = i32::midpoint(rect.top, rect.bottom);
     let position = monitor.position();
     let size = monitor.size();
     center_x >= position.x

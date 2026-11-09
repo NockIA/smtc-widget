@@ -21,7 +21,7 @@ pub fn smtc_manager() -> windows::core::Result<SmtcManager> {
 pub fn source_id(session: &Session) -> String {
     session
         .SourceAppUserModelId()
-        .inspect_err(|e| log::warn!("lecture de l'identifiant de source échouée : {e}"))
+        .inspect_err(|e| log::warn!("lecture de l'identifiant de source a échoué : {e}"))
         .map(|id| id.to_string())
         .unwrap_or_default()
 }
@@ -32,6 +32,11 @@ pub fn all_sessions(manager: &SmtcManager) -> Vec<Session> {
         .inspect_err(|e| log::warn!("liste des sessions SMTC illisible : {e}"))
         .map(|sessions| sessions.into_iter().collect())
         .unwrap_or_default()
+}
+
+/// Session active (voir `resolve_session`), en créant le manager au besoin.
+pub fn active_session(selected: Option<&str>) -> windows::core::Result<Option<Session>> {
+    Ok(resolve_session(&smtc_manager()?, selected))
 }
 
 /// Session choisie par l'utilisateur si elle existe encore, sinon celle de Windows.

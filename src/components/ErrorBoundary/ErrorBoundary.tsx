@@ -1,9 +1,10 @@
 import { Component, ErrorInfo, PropsWithChildren } from "react";
-import MarqueeText from "../SmtcWidget/MarqueeText/MarqueeText";
-import IconButton from "../IconButton/IconButton";
-import RetryIcon from "../../assets/icons/retry.svg?react";
-import WarningIcon from "../../assets/icons/warning.svg?react";
-import { logger } from "../../utils/logger";
+
+import RetryIcon from "@/assets/icons/retry.svg?react";
+import WarningIcon from "@/assets/icons/warning.svg?react";
+import IconButton from "@/components/IconButton/IconButton";
+import MarqueeText from "@/components/SmtcWidget/MarqueeText/MarqueeText";
+import { logger } from "@/utils/logger.utils";
 import "./ErrorBoundary.css";
 
 const RETRY_DELAY_MS = 5000;

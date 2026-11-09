@@ -4,8 +4,8 @@ use webview2_com::Microsoft::Web::WebView2::Win32::{
 };
 use windows::core::Interface;
 
-/// Demande à WebView2 de libérer sa mémoire tant que le widget est caché.
-/// Sans effet sur un runtime WebView2 trop ancien pour cette option.
+/// Demande à `WebView2` de libérer sa mémoire tant que le widget est caché.
+/// Sans effet sur un runtime `WebView2` trop ancien pour cette option.
 pub fn set_low_memory(window: &WebviewWindow, low: bool) {
     let level = if low {
         COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW
@@ -22,6 +22,6 @@ pub fn set_low_memory(window: &WebviewWindow, low: bool) {
         }
     });
     if let Err(e) = result {
-        log::error!("réglage mémoire de WebView2 échoué : {e}");
+        log::error!("réglage mémoire de WebView2 a échoué : {e}");
     }
 }

@@ -32,7 +32,7 @@ impl AppError {
 impl Serialize for AppError {
     /// Appelé une seule fois par erreur renvoyée au front : c'est là que le détail est journalisé.
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        log::error!("commande échouée [{}] : {self}", self.code());
+        log::error!("commande a échoué [{}] : {self}", self.code());
         let mut state = serializer.serialize_struct("AppError", 1)?;
         state.serialize_field("code", self.code())?;
         state.end()

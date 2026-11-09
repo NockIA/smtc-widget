@@ -3,7 +3,7 @@ use tauri::{AppHandle, Manager};
 
 use tauri_plugin_autostart::ManagerExt;
 
-use super::constants::{AUTOSTART_ID, MONITOR_PREFIX, QUIT_ID, SOURCE_PREFIX, THEME_PREFIX};
+use super::action::MenuAction;
 use crate::features::appearance;
 use crate::features::audio_source::AudioSourceState;
 use crate::features::preferences::{PreferencesStore, ThemePreference};
@@ -11,12 +11,12 @@ use crate::features::window;
 
 fn set_theme(app: &AppHandle, theme: ThemePreference) {
     if let Err(e) = app.state::<PreferencesStore>().update(|prefs| prefs.theme = theme) {
-        log::error!("sauvegarde du thème échouée : {e}");
+        log::error!("sauvegarde du thème a échoué : {e}");
     }
     if let Some(window) = app.get_webview_window("main")
         && let Err(e) = appearance::apply_theme(&window, theme)
     {
-        log::error!("application du thème échouée : {e}");
+        log::error!("application du thème a échoué : {e}");
     }
 }
 
@@ -25,7 +25,7 @@ fn move_to_monitor(app: &AppHandle, key: &str) {
         return;
     };
     if let Err(e) = window::move_to_monitor(&window, key) {
-        log::error!("déplacement vers l'écran échoué : {e}");
+        log::error!("déplacement vers l'écran a échoué : {e}");
     }
 }
 
@@ -37,22 +37,20 @@ fn toggle_autostart(app: &AppHandle) {
         autolaunch.enable()
     };
     if let Err(e) = result {
-        log::error!("changement du lancement au démarrage échoué : {e}");
+        log::error!("changement du lancement au démarrage a échoué : {e}");
     }
 }
 
 pub fn handle_menu_event(app: &AppHandle, event: MenuEvent) {
-    let id = event.id().as_ref();
+    let Some(action) = MenuAction::parse(event.id().as_ref()) else {
+        return;
+    };
 
-    if id == QUIT_ID {
-        app.exit(0);
-    } else if id == AUTOSTART_ID {
-        toggle_autostart(app);
-    } else if let Some(source) = id.strip_prefix(SOURCE_PREFIX) {
-        app.state::<AudioSourceState>().select_source(source.to_owned());
-    } else if let Some(key) = id.strip_prefix(MONITOR_PREFIX) {
-        move_to_monitor(app, key);
-    } else if let Some(theme) = id.strip_prefix(THEME_PREFIX).and_then(ThemePreference::from_id) {
-        set_theme(app, theme);
+    match action {
+        MenuAction::Quit => app.exit(0),
+        MenuAction::Autostart => toggle_autostart(app),
+        MenuAction::Source(id) => app.state::<AudioSourceState>().select_source(id),
+        MenuAction::Monitor(key) => move_to_monitor(app, &key),
+        MenuAction::Theme(theme) => set_theme(app, theme),
     }
 }

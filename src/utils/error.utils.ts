@@ -1,6 +1,8 @@
-import { logger } from "./logger";
-import { FALLBACK_ERROR_CODE, KNOWN_ERROR_CODES } from "../constants/ERROR_CODES";
-import { AppErrorCode } from "../types/error.types";
+import { FALLBACK_ERROR_CODE } from "@/constants/FALLBACK_ERROR_CODE";
+import { KNOWN_ERROR_CODES } from "@/constants/KNOWN_ERROR_CODES";
+import { AppErrorCode } from "@/types/error.types";
+
+import { logger } from "./logger.utils";
 
 /**
  * Handler de `.catch` pour les `invoke` : journalise le code reçu, sans jamais exposer

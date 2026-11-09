@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { TrackInfo } from "../../../types/track.types";
+
+import { TrackInfo } from "@/types/track.types";
 import "./TrackProgress.css";
 
 // La barre avance d'environ 1 px par seconde : une image par seconde suffit.
@@ -9,14 +10,16 @@ interface TrackProgressProps {
   track: TrackInfo;
   /** Instant (performance.now) de réception du morceau, base de l'interpolation. */
   receivedAt: number;
+  /** Widget caché par une application plein écran : rien à dessiner. */
+  hidden: boolean;
 }
 
-const TrackProgress = ({ track, receivedAt }: TrackProgressProps) => {
+const TrackProgress = ({ track, receivedAt, hidden }: TrackProgressProps) => {
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const bar = barRef.current;
-    if (!bar) return;
+    if (!bar || hidden) return;
 
     const render = () => {
       const elapsed = track.isPlaying ? performance.now() - receivedAt : 0;
@@ -26,12 +29,9 @@ const TrackProgress = ({ track, receivedAt }: TrackProgressProps) => {
     render();
 
     if (!track.isPlaying) return;
-    const id = window.setInterval(() => {
-      // Widget caché par une application plein écran : rien à dessiner.
-      if (!document.documentElement.classList.contains("widget-hidden")) render();
-    }, UPDATE_INTERVAL_MS);
+    const id = window.setInterval(render, UPDATE_INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, [track, receivedAt]);
+  }, [track, receivedAt, hidden]);
 
   return (
     <div className="progress">

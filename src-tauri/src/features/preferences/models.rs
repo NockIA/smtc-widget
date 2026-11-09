@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use super::constants::POSITION_EPSILON;
+/// Écart (en pixels logiques) en dessous duquel deux positions sont considérées identiques.
+const POSITION_EPSILON: f64 = 1.0;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

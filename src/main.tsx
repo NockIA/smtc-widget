@@ -1,12 +1,14 @@
 import React from "react";
+
 import ReactDOM from "react-dom/client";
 
 import "./styles/index.css";
+import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+import { useSystemColors } from "@/hooks/useSystemColors";
+import { logger } from "@/utils/logger.utils";
+import { applyBackground } from "@/utils/systemColors.utils";
+
 import App from "./App";
-import ErrorBoundary from "./components/ErrorBoundary/ErrorBoundary";
-import { useSystemColors } from "./hooks/useSystemColors";
-import { logger } from "./utils/logger";
-import { applyBackground } from "./utils/systemColors";
 
 applyBackground(null);
 

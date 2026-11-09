@@ -28,7 +28,7 @@ pub fn run() {
 
             let theme = app.state::<PreferencesStore>().snapshot().theme;
             if let Err(e) = appearance::apply_theme(&main_window, theme) {
-                log::error!("application du thème échouée : {e}");
+                log::error!("application du thème a échoué : {e}");
             }
 
             window::init_placement(main_window.clone());

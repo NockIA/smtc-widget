@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import IconButton from "../../IconButton/IconButton";
-import VolumeIcon from "../../../assets/icons/volume.svg?react";
-import VolumeMutedIcon from "../../../assets/icons/volume-muted.svg?react";
-import VolumeSlider from "../VolumeSlider/VolumeSlider";
+
+import VolumeMutedIcon from "@/assets/icons/volume-muted.svg?react";
+import VolumeIcon from "@/assets/icons/volume.svg?react";
+import IconButton from "@/components/IconButton/IconButton";
+import VolumeSlider from "@/components/SmtcWidget/VolumeSlider/VolumeSlider";
 import "./VolumeControl.css";
 
 interface VolumeControlProps {

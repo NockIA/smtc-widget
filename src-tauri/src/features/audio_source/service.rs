@@ -1,7 +1,7 @@
 use super::models::SourceEntry;
 use crate::shared::smtc::{all_sessions, resolve_session, smtc_manager, source_id};
 
-/// "Spotify.exe" -> "Spotify" ; "SpotifyAB.SpotifyMusic_xxx!Spotify" -> "Spotify".
+/// `Spotify.exe` -> `Spotify` ; `SpotifyAB.SpotifyMusic_xxx!Spotify` -> `Spotify`.
 fn label(id: &str) -> String {
     let name = id.rsplit('!').next().unwrap_or(id);
     name.strip_suffix(".exe").unwrap_or(name).to_string()
