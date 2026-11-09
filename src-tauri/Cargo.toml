@@ -54,7 +54,8 @@ features = [
 [profile.release]
 codegen-units = 1
 lto = true
-opt-level = 3
+# Optimisé pour la taille : l'app attend surtout des événements, la vitesse brute compte peu.
+opt-level = "s"
 panic = "abort"
 strip = true
 
