@@ -1,8 +1,11 @@
+pub mod commands;
 mod foreground;
 mod layout;
 mod models;
 mod persistence;
 mod placement;
+mod resize;
+mod size;
 mod taskbar_layout;
 mod webview_memory;
 mod win32;
@@ -12,7 +15,7 @@ use tauri::{Manager, WebviewWindow};
 use crate::features::preferences::PreferencesStore;
 
 pub use foreground::{is_hidden, keep_on_top, pause_keep_on_top};
-pub use placement::list_monitors;
+pub use placement::{current_scale, list_monitors};
 
 /// Place la fenêtre selon les préférences, l'affiche, puis suit ses déplacements et les changements d'écrans.
 pub fn init_placement(window: WebviewWindow) {

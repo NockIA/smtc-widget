@@ -1,8 +1,9 @@
 use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 
 use super::models::MonitorEntry;
+use super::size::{physical_size, scale_from_width};
 use super::taskbar_layout::right_cluster_left;
-use crate::features::preferences::{MonitorPlacement, Preferences};
+use crate::features::preferences::{DEFAULT_SCALE, MonitorPlacement, Preferences};
 
 const DEFAULT_BOTTOM_MARGIN: f64 = 0.0;
 
@@ -51,6 +52,7 @@ pub fn default_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Re
     Ok(MonitorPlacement {
         right_margin,
         bottom_margin: DEFAULT_BOTTOM_MARGIN,
+        scale: DEFAULT_SCALE,
     })
 }
 
@@ -65,16 +67,32 @@ pub fn current_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Re
     Ok(MonitorPlacement {
         right_margin: f64::from(right) / scale,
         bottom_margin: f64::from(bottom) / scale,
+        scale: scale_from_width(f64::from(size.width), scale),
     })
 }
 
-fn apply(window: &WebviewWindow, monitor: &Monitor, placement: MonitorPlacement) -> tauri::Result<()> {
-    let size = window.outer_size()?;
-    let scale = monitor.scale_factor();
-    let x = monitor_right(monitor) - size.width as i32 - (placement.right_margin * scale) as i32;
-    let y = monitor_bottom(monitor) - size.height as i32 - (placement.bottom_margin * scale) as i32;
+/// Échelle actuelle du widget (1.0 = taille de base).
+pub fn current_scale(window: &WebviewWindow) -> tauri::Result<f64> {
+    Ok(scale_from_width(
+        f64::from(window.outer_size()?.width),
+        window.scale_factor()?,
+    ))
+}
 
-    window.set_position(PhysicalPosition::new(x, y))
+/// Applique l'échelle puis la position, en gardant le coin bas-droit ancré.
+pub fn apply(window: &WebviewWindow, monitor: &Monitor, placement: MonitorPlacement) -> tauri::Result<()> {
+    let dpi = monitor.scale_factor();
+    let size = physical_size(placement.scale, dpi);
+    let position = PhysicalPosition::new(
+        monitor_right(monitor) - size.width as i32 - (placement.right_margin * dpi) as i32,
+        monitor_bottom(monitor) - size.height as i32 - (placement.bottom_margin * dpi) as i32,
+    );
+
+    // Entrer d'abord sur l'écran cible : un changement de DPI peut redimensionner la fenêtre, la taille se règle ensuite.
+    window.set_position(position)?;
+    window.set_size(size)?;
+    window.set_zoom(placement.scale)?;
+    window.set_position(position)
 }
 
 fn choose_monitor(window: &WebviewWindow, prefs: &Preferences) -> tauri::Result<Option<Monitor>> {

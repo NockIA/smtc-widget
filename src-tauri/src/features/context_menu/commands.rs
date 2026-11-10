@@ -11,6 +11,8 @@ pub async fn show_context_menu(app: AppHandle, window: WebviewWindow, x: f64) ->
     // Le widget est collé en bas de l'écran : le menu s'ouvre au-dessus de son bord haut,
     // à l'abscisse du clic, pour ne pas passer derrière la barre des tâches.
     let _pause = window::pause_keep_on_top();
+    // `x` vient du webview, en pixels CSS : sous zoom, un pixel CSS vaut `scale` pixel logique.
+    let x = x * window::current_scale(&window)?;
     window.popup_menu_at(&menu, tauri::LogicalPosition::new(x, 0.0))?;
     Ok(())
 }

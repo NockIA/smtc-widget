@@ -90,7 +90,7 @@ src-tauri/                    Backend Rust et configuration Tauri
       playback/               Morceau en cours, contrôles, pochette, écoute des événements SMTC
       audio_source/           Source audio choisie (état, liste des sources)
       volume/                 Volume par application (WASAPI), poussé au front à chaque changement
-      window/                 Placement par écran, position sauvegardée, premier plan, écrans branchés
+      window/                 Placement et taille par écran (redimensionnement par le coin haut gauche, proportions conservées), premier plan, plein écran, écrans branchés
       preferences/            Fichier de préférences unique (thème, position par écran)
       appearance/             Thème appliqué, couleurs système (barre des tâches, accent)
       context_menu/           Menu du clic droit (piste audio, écran, thème, quitter)
