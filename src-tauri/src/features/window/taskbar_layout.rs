@@ -1,10 +1,9 @@
 use tauri::Monitor;
-
 use windows::Win32::Foundation::{HWND, LPARAM, RECT};
-use windows::Win32::UI::WindowsAndMessaging::{
-    EnumChildWindows, EnumWindows, GetClassNameW, GetParent, GetWindowRect, IsWindowVisible,
-};
+use windows::Win32::UI::WindowsAndMessaging::{EnumChildWindows, EnumWindows, GetParent, IsWindowVisible};
 use windows::core::BOOL;
+
+use super::win32::{class_name, window_rect};
 
 /// Marge vide (pixels logiques) entre le bord gauche de la fenêtre météo et son icône.
 const WEATHER_INNER_PADDING: f64 = 12.0;
@@ -18,18 +17,6 @@ const WEATHER_CLASS_PREFIX: &str = "DynamicContent";
 struct Child {
     class: String,
     rect: RECT,
-}
-
-fn class_name(hwnd: HWND) -> String {
-    let mut buffer = [0u16; 256];
-    let len = unsafe { GetClassNameW(hwnd, &mut buffer) };
-    String::from_utf16_lossy(&buffer[..len.max(0) as usize])
-}
-
-fn window_rect(hwnd: HWND) -> Option<RECT> {
-    let mut rect = RECT::default();
-    unsafe { GetWindowRect(hwnd, &mut rect) }.ok()?;
-    Some(rect)
 }
 
 unsafe extern "system" fn collect_taskbar(hwnd: HWND, list: LPARAM) -> BOOL {

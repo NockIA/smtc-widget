@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use tauri::{Manager, WebviewWindow, WindowEvent};
 
+use super::foreground;
 use super::layout;
 use super::placement::{current_placement, default_placement, monitor_key};
 use crate::features::preferences::PreferencesStore;
@@ -46,6 +47,9 @@ pub fn track_moves(window: WebviewWindow) {
     thread::spawn(move || {
         while rx.recv().is_ok() {
             while rx.recv_timeout(SAVE_DEBOUNCE).is_ok() {}
+
+            // Fin du déplacement : le widget est peut-être arrivé sur un écran où une application est en plein écran.
+            foreground::refresh();
 
             if let Err(e) = save_current_position(&window) {
                 log::error!("sauvegarde de la position a échoué : {e}");

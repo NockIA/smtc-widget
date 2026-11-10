@@ -5,6 +5,7 @@ mod persistence;
 mod placement;
 mod taskbar_layout;
 mod webview_memory;
+mod win32;
 
 use tauri::{Manager, WebviewWindow};
 
@@ -30,5 +31,8 @@ pub fn init_placement(window: WebviewWindow) {
 
 pub fn move_to_monitor(window: &WebviewWindow, monitor_key: &str) -> tauri::Result<()> {
     let prefs = window.state::<PreferencesStore>().snapshot();
-    placement::move_to_monitor(window, &prefs, monitor_key)
+    placement::move_to_monitor(window, &prefs, monitor_key)?;
+    // Le nouvel écran peut déjà avoir une application en plein écran.
+    foreground::refresh();
+    Ok(())
 }
