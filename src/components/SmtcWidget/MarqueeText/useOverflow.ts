@@ -18,10 +18,19 @@ export const useOverflow = (text: string) => {
     };
     measure();
 
-    const observer = new ResizeObserver(measure);
+    // Mesure reportée à l'image suivante : le rendu qu'elle déclenche change la taille des éléments observés,
+    // ce qui, pendant la distribution des notifications, provoque l'erreur « ResizeObserver loop ».
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    });
     observer.observe(container);
     observer.observe(content);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [text]);
 
   return { containerRef, textRef, textWidth, overflowing };
