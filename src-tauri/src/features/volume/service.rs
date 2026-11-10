@@ -6,7 +6,6 @@ use windows::Win32::System::Com::{CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInst
 use windows::core::{GUID, Interface};
 
 use super::process;
-use crate::shared::smtc::{active_session, source_id};
 
 /// Évite les faux positifs avec des noms d'exécutable très courts.
 const MIN_EXE_STEM_LEN: usize = 3;
@@ -85,30 +84,14 @@ pub(super) fn max_volume(sessions: &[IAudioSessionControl]) -> windows::core::Re
     Ok(volume)
 }
 
-fn current_source_sessions(selected: Option<&str>) -> windows::core::Result<Vec<IAudioSessionControl>> {
-    let Some(session) = active_session(selected)? else {
-        return Ok(Vec::new());
-    };
-    let manager = session_manager(&device_enumerator()?)?;
-    source_sessions(&manager, &source_id(&session))
-}
-
-/// Volume (0.0 à 1.0) de la source courante, `None` si aucune session audio ne correspond.
-pub fn get_volume(selected: Option<&str>) -> windows::core::Result<Option<f32>> {
-    let _com = ComGuard::new();
-    max_volume(&current_source_sessions(selected)?)
-}
-
-/// Renvoie `false` si aucune session audio ne correspond.
-pub fn set_volume(selected: Option<&str>, volume: f32) -> windows::core::Result<bool> {
-    let _com = ComGuard::new();
-    let sessions = current_source_sessions(selected)?;
-    for session in &sessions {
+/// Applique le volume (0.0 à 1.0) à toutes les sessions ; `WIDGET_CONTEXT` évite que la surveillance le renvoie au front.
+pub(super) fn set_volume(sessions: &[IAudioSessionControl], volume: f32) -> windows::core::Result<()> {
+    for session in sessions {
         unsafe {
             session
                 .cast::<ISimpleAudioVolume>()?
                 .SetMasterVolume(volume.clamp(0.0, 1.0), &WIDGET_CONTEXT)?;
-        };
+        }
     }
-    Ok(!sessions.is_empty())
+    Ok(())
 }

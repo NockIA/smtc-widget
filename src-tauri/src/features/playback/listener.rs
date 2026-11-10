@@ -8,7 +8,7 @@ use windows::core::RuntimeType;
 use super::emitter::TrackEmitter;
 use super::track::get_current_track;
 use crate::features::audio_source::AudioSourceState;
-use crate::features::volume;
+use crate::features::volume::VolumeWatcher;
 use crate::shared::smtc::{Session, SmtcManager, resolve_session, smtc_manager, source_id};
 
 /// Attente après le dernier événement SMTC avant de relire le morceau (regroupe les rafales).
@@ -69,7 +69,8 @@ fn resubscribe(
 
     let selected = app.state::<AudioSourceState>().selected();
     let session = resolve_session(manager, selected.as_deref());
-    volume::follow_source(session.as_ref().map(source_id));
+    app.state::<VolumeWatcher>()
+        .follow_source(session.as_ref().map(source_id));
     if let Some(session) = session {
         *subscription = Some(SessionSubscription::new(session, tx)?);
     }
@@ -78,7 +79,8 @@ fn resubscribe(
 
 fn publish(app: &AppHandle, emitter: &mut TrackEmitter) {
     let selected = app.state::<AudioSourceState>().selected();
-    match get_current_track(selected.as_deref()) {
+    // Thread dédié : attendre ici ne bloque aucun autre travail.
+    match tauri::async_runtime::block_on(get_current_track(selected.as_deref())) {
         Ok(track) => emitter.emit_if_changed(app, track),
         Err(e) => log::error!("get_current_track a échoué : {e}"),
     }

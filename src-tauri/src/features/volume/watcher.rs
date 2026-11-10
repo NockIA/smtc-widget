@@ -2,8 +2,8 @@
 #![allow(clippy::inline_always, clippy::ref_as_ptr)]
 
 use std::iter;
-use std::sync::OnceLock;
 use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -28,17 +28,48 @@ const EVENT_DEBOUNCE: Duration = Duration::from_millis(50);
 enum Message {
     /// La source suivie par le lecteur a changé.
     Follow(Option<String>),
+    /// Volume demandé par le widget.
+    SetVolume(f32),
     /// Les sessions audio ou le périphérique de sortie ont changé : se réabonner.
     Resubscribe,
     VolumeChanged,
 }
 
-static SENDER: OnceLock<Sender<Message>> = OnceLock::new();
+/// Volume de la source suivie : relu à chaque changement et poussé au front, y compris depuis le mélangeur Windows.
+/// Un thread dédié garde les sessions audio ouvertes, ce qui évite de les rechercher à chaque réglage du curseur.
+pub struct VolumeWatcher {
+    tx: Sender<Message>,
+    /// Dernier volume connu, lu par le front au démarrage (l'événement peut partir avant qu'il écoute).
+    current: Arc<Mutex<Option<f32>>>,
+}
 
-/// Indique la source SMTC dont le volume doit être suivi.
-pub fn follow_source(source: Option<String>) {
-    if let Some(tx) = SENDER.get() {
-        let _ = tx.send(Message::Follow(source));
+impl VolumeWatcher {
+    pub fn start(app: AppHandle) -> Self {
+        let (tx, rx) = mpsc::channel();
+        let current = Arc::new(Mutex::new(None));
+
+        let worker_tx = tx.clone();
+        let worker_current = current.clone();
+        // Les objets COM sont créés sur le thread qui les utilise.
+        thread::spawn(move || {
+            if let Err(e) = Worker::new(app, worker_tx, worker_current).map(|worker| worker.run(&rx)) {
+                log::error!("surveillance du volume a échoué : {e}");
+            }
+        });
+        Self { tx, current }
+    }
+
+    /// Indique la source SMTC dont le volume doit être suivi.
+    pub fn follow_source(&self, source: Option<String>) {
+        let _ = self.tx.send(Message::Follow(source));
+    }
+
+    pub fn volume(&self) -> Option<f32> {
+        *self.current.lock().unwrap()
+    }
+
+    pub fn set_volume(&self, volume: f32) {
+        let _ = self.tx.send(Message::SetVolume(volume));
     }
 }
 
@@ -178,67 +209,97 @@ impl Drop for Subscription {
     }
 }
 
-fn subscribe(enumerator: &IMMDeviceEnumerator, source: Option<&str>, tx: &Sender<Message>) -> Option<Subscription> {
-    Subscription::new(enumerator, source?, tx)
-        .inspect_err(|e| log::error!("abonnement au volume a échoué : {e}"))
-        .ok()
+/// État du thread de surveillance.
+struct Worker {
+    app: AppHandle,
+    tx: Sender<Message>,
+    current: Arc<Mutex<Option<f32>>>,
+    enumerator: IMMDeviceEnumerator,
+    source: Option<String>,
+    subscription: Option<Subscription>,
+    /// Garde COM du thread : à libérer en dernier.
+    _com: ComGuard,
 }
 
-fn current_volume(subscription: Option<&Subscription>) -> Option<f32> {
-    service::max_volume(&subscription?.sessions)
-        .inspect_err(|e| log::error!("lecture du volume a échoué : {e}"))
-        .ok()
-        .flatten()
-}
+impl Worker {
+    fn new(app: AppHandle, tx: Sender<Message>, current: Arc<Mutex<Option<f32>>>) -> windows::core::Result<Self> {
+        let com = ComGuard::new();
+        let enumerator = service::device_enumerator()?;
+        let device_events: IMMNotificationClient = DeviceEvents { tx: tx.clone() }.into();
+        unsafe { enumerator.RegisterEndpointNotificationCallback(&device_events)? };
+        Ok(Self {
+            app,
+            tx,
+            current,
+            enumerator,
+            source: None,
+            subscription: None,
+            _com: com,
+        })
+    }
 
-fn run(app: AppHandle, rx: Receiver<Message>, tx: Sender<Message>) -> windows::core::Result<()> {
-    let _com = ComGuard::new();
-    let enumerator = service::device_enumerator()?;
-    let device_events: IMMNotificationClient = DeviceEvents { tx: tx.clone() }.into();
-    unsafe { enumerator.RegisterEndpointNotificationCallback(&device_events)? };
-
-    let mut source: Option<String> = None;
-    let mut subscription: Option<Subscription> = None;
-
-    while let Ok(first) = rx.recv() {
-        let mut needs_resubscribe = false;
-        let mut changed = false;
-        for message in iter::once(first).chain(iter::from_fn(|| rx.recv_timeout(EVENT_DEBOUNCE).ok())) {
-            match message {
-                Message::Follow(followed) if followed != source => {
-                    source = followed;
-                    needs_resubscribe = true;
+    fn run(mut self, rx: &Receiver<Message>) {
+        while let Ok(first) = rx.recv() {
+            let mut needs_resubscribe = false;
+            let mut changed = false;
+            for message in iter::once(first).chain(iter::from_fn(|| rx.recv_timeout(EVENT_DEBOUNCE).ok())) {
+                match message {
+                    // Appliqué tout de suite : un glissé du curseur envoie des messages en continu et ne laisserait
+                    // jamais la fin du regroupement arriver.
+                    Message::SetVolume(volume) => self.set_volume(volume),
+                    Message::Follow(followed) if followed != self.source => {
+                        self.source = followed;
+                        needs_resubscribe = true;
+                    }
+                    Message::Follow(_) => {}
+                    Message::Resubscribe => needs_resubscribe = true,
+                    Message::VolumeChanged => changed = true,
                 }
-                Message::Follow(_) => {}
-                Message::Resubscribe => needs_resubscribe = true,
-                Message::VolumeChanged => changed = true,
             }
-        }
 
-        if needs_resubscribe {
-            drop(subscription.take());
-            subscription = subscribe(&enumerator, source.as_deref(), &tx);
-        }
-        if needs_resubscribe || changed {
-            let volume = current_volume(subscription.as_ref());
-            if let Err(e) = app.emit(VOLUME_CHANGED_EVENT, volume) {
-                log::error!("emit {VOLUME_CHANGED_EVENT} a échoué : {e}");
+            if needs_resubscribe {
+                self.resubscribe();
+            }
+            if needs_resubscribe || changed {
+                self.publish();
             }
         }
     }
-    Ok(())
-}
 
-/// Pousse au front le volume de la source suivie (`follow_source`) à chaque changement,
-/// y compris depuis le mélangeur Windows.
-pub fn start_watching(app: AppHandle) {
-    let (tx, rx) = mpsc::channel();
-    if SENDER.set(tx.clone()).is_err() {
-        return;
+    fn resubscribe(&mut self) {
+        drop(self.subscription.take());
+        let Some(source) = self.source.as_deref() else {
+            return;
+        };
+        self.subscription = Subscription::new(&self.enumerator, source, &self.tx)
+            .inspect_err(|e| log::error!("abonnement au volume a échoué : {e}"))
+            .ok();
     }
-    thread::spawn(move || {
-        if let Err(e) = run(app, rx, tx) {
-            log::error!("surveillance du volume a échoué : {e}");
+
+    fn read_volume(&self) -> Option<f32> {
+        service::max_volume(&self.subscription.as_ref()?.sessions)
+            .inspect_err(|e| log::error!("lecture du volume a échoué : {e}"))
+            .ok()
+            .flatten()
+    }
+
+    /// Mémorise le volume et le pousse au front.
+    fn publish(&self) {
+        let volume = self.read_volume();
+        *self.current.lock().unwrap() = volume;
+        if let Err(e) = self.app.emit(VOLUME_CHANGED_EVENT, volume) {
+            log::error!("emit {VOLUME_CHANGED_EVENT} a échoué : {e}");
         }
-    });
+    }
+
+    /// Le front connaît déjà la valeur qu'il demande : on met seulement à jour la mémoire, sans événement.
+    fn set_volume(&self, volume: f32) {
+        let Some(subscription) = &self.subscription else {
+            return;
+        };
+        match service::set_volume(&subscription.sessions, volume) {
+            Ok(()) => *self.current.lock().unwrap() = self.read_volume(),
+            Err(e) => log::error!("réglage du volume a échoué : {e}"),
+        }
+    }
 }

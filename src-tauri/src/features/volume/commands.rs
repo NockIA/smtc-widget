@@ -1,15 +1,14 @@
 use tauri::State;
 
-use super::service;
-use crate::features::audio_source::AudioSourceState;
-use crate::shared::error::{AppError, AppResult};
+use super::VolumeWatcher;
 
+/// Volume (0.0 à 1.0) de la source suivie, `None` si aucune session audio ne correspond.
 #[tauri::command]
-pub async fn get_volume(state: State<'_, AudioSourceState>) -> AppResult<Option<f32>> {
-    service::get_volume(state.selected().as_deref()).map_err(AppError::Audio)
+pub fn get_volume(watcher: State<'_, VolumeWatcher>) -> Option<f32> {
+    watcher.volume()
 }
 
 #[tauri::command]
-pub async fn set_volume(state: State<'_, AudioSourceState>, volume: f32) -> AppResult<bool> {
-    service::set_volume(state.selected().as_deref(), volume).map_err(AppError::Audio)
+pub fn set_volume(watcher: State<'_, VolumeWatcher>, volume: f32) {
+    watcher.set_volume(volume);
 }

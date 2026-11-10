@@ -4,12 +4,12 @@ use super::models::TrackInfo;
 use super::timeline::Timeline;
 use crate::shared::smtc::{active_session, source_id};
 
-pub fn get_current_track(selected: Option<&str>) -> windows::core::Result<Option<TrackInfo>> {
+pub async fn get_current_track(selected: Option<&str>) -> windows::core::Result<Option<TrackInfo>> {
     let Some(session) = active_session(selected)? else {
         return Ok(None);
     };
 
-    let props = session.TryGetMediaPropertiesAsync()?.join()?;
+    let props = session.TryGetMediaPropertiesAsync()?.await?;
     let is_playing = session.GetPlaybackInfo()?.PlaybackStatus()?
         == GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing;
     let timeline = Timeline::estimate(&session, is_playing)?;

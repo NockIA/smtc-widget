@@ -10,8 +10,6 @@ use serde::{Serialize, Serializer};
 pub enum AppError {
     #[error("SMTC indisponible : {0}")]
     Smtc(windows::core::Error),
-    #[error("audio indisponible : {0}")]
-    Audio(windows::core::Error),
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
     #[error(transparent)]
@@ -23,7 +21,6 @@ impl AppError {
     pub fn code(&self) -> &'static str {
         match self {
             Self::Smtc(_) => "smtc_unavailable",
-            Self::Audio(_) => "audio_unavailable",
             Self::Tauri(_) | Self::Io(_) => "internal",
         }
     }
