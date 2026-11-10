@@ -8,11 +8,11 @@ import { applyAccent, applyBackground } from "@/utils/systemColors.utils";
 
 /** Fond = couleur de la barre des tâches, accent = accent de Windows (thème et orange par défaut sinon). */
 export const useSystemColors = () => {
-  const taskbar = useRef<string | null>(null);
+  const latest = useRef<Pick<SystemColors, "taskbar" | "transparent">>({ taskbar: null, transparent: false });
 
   const apply = useCallback((colors: SystemColors) => {
-    taskbar.current = colors.taskbar;
-    applyBackground(colors.taskbar);
+    latest.current = colors;
+    applyBackground(colors.taskbar, colors.transparent);
     applyAccent(colors.accent);
   }, []);
 
@@ -24,7 +24,7 @@ export const useSystemColors = () => {
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: light)");
-    const onThemeChange = () => applyBackground(taskbar.current);
+    const onThemeChange = () => applyBackground(latest.current.taskbar, latest.current.transparent);
     media.addEventListener("change", onThemeChange);
     return () => media.removeEventListener("change", onThemeChange);
   }, []);

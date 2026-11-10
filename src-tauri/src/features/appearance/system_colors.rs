@@ -4,7 +4,7 @@ use std::sync::mpsc::{self, RecvTimeoutError, Sender};
 use std::thread;
 use std::time::Duration;
 
-use tauri::{Emitter, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow, WindowEvent};
+use tauri::{Emitter, Manager, Monitor, PhysicalPosition, PhysicalSize, WebviewWindow, WindowEvent};
 use windows::Foundation::TypedEventHandler;
 use windows::UI::ViewManagement::{UIColorType, UISettings};
 use windows::Win32::Graphics::Gdi::{
@@ -13,6 +13,7 @@ use windows::Win32::Graphics::Gdi::{
 };
 
 use super::models::SystemColors;
+use crate::features::preferences::{PreferencesStore, ThemePreference};
 use crate::features::window;
 
 const MIN_SAMPLES: usize = 3;
@@ -164,6 +165,7 @@ fn read_with(window: &WebviewWindow, settings: Option<&UISettings>) -> tauri::Re
     Ok(SystemColors {
         taskbar: taskbar_color(window)?,
         accent: settings.and_then(accent_color),
+        transparent: window.state::<PreferencesStore>().snapshot().theme == ThemePreference::Transparent,
     })
 }
 

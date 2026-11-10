@@ -22,16 +22,19 @@ pub enum ThemePreference {
     System,
     Light,
     Dark,
+    /// Palette du thème système, sans fond : la barre des tâches reste visible derrière le widget.
+    Transparent,
 }
 
 impl ThemePreference {
-    pub const ALL: [Self; 3] = [Self::System, Self::Light, Self::Dark];
+    pub const ALL: [Self; 4] = [Self::System, Self::Light, Self::Dark, Self::Transparent];
 
     pub fn id(self) -> &'static str {
         match self {
             Self::System => "system",
             Self::Light => "light",
             Self::Dark => "dark",
+            Self::Transparent => "transparent",
         }
     }
 

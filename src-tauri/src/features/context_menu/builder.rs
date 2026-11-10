@@ -13,6 +13,7 @@ fn theme_label(theme: ThemePreference) -> &'static str {
         ThemePreference::System => "Système",
         ThemePreference::Light => "Clair",
         ThemePreference::Dark => "Sombre",
+        ThemePreference::Transparent => "Transparent",
     }
 }
 

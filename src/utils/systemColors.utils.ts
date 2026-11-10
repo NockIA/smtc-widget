@@ -19,9 +19,10 @@ export const applyAccent = (color: string | null) => setOrRemoveProperty("--acce
 /**
  * Applique la couleur de fond (celle de la barre des tâches, ou celle du thème si `null`)
  * et choisit la palette claire ou sombre selon sa luminosité, pour garder le texte lisible.
+ * Avec `transparent`, le fond n'est pas peint mais la palette reste choisie d'après cette couleur.
  */
-export const applyBackground = (color: string | null) => {
-  setOrRemoveProperty("--bg", color);
+export const applyBackground = (color: string | null, transparent = false) => {
+  setOrRemoveProperty("--bg", transparent ? "transparent" : color);
 
   const isLight = color
     ? luminance(color) > LIGHT_LUMINANCE_THRESHOLD

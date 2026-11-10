@@ -18,6 +18,8 @@ fn set_theme(app: &AppHandle, theme: ThemePreference) {
     {
         log::error!("application du thème a échoué : {e}");
     }
+    // Le front doit connaître le choix « Transparent » : les couleurs sont relues et renvoyées.
+    appearance::request_refresh();
 }
 
 fn move_to_monitor(app: &AppHandle, key: &str) {
