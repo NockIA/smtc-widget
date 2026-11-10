@@ -85,7 +85,8 @@ pub fn apply(window: &WebviewWindow, monitor: &Monitor, placement: MonitorPlacem
     let size = physical_size(placement.scale, dpi);
     let position = PhysicalPosition::new(
         monitor_right(monitor) - size.width as i32 - (placement.right_margin * dpi) as i32,
-        monitor_bottom(monitor) - size.height as i32 - (placement.bottom_margin * dpi) as i32,
+        // Une position enregistrée sous le bord de l'écran (avant la limite du déplacement) est ramenée sur l'écran.
+        monitor_bottom(monitor) - size.height as i32 - (placement.bottom_margin.max(0.0) * dpi) as i32,
     );
 
     // Entrer d'abord sur l'écran cible : un changement de DPI peut redimensionner la fenêtre, la taille se règle ensuite.

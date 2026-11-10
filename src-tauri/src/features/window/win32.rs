@@ -2,6 +2,7 @@ use std::ffi::c_void;
 
 use windows::Win32::Foundation::{HWND, RECT};
 use windows::Win32::Graphics::Dwm::{DWMWA_CLOAKED, DwmGetWindowAttribute};
+use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, HMONITOR, MONITORINFO};
 use windows::Win32::UI::WindowsAndMessaging::{GetClassNameW, GetWindowRect};
 
 pub fn class_name(hwnd: HWND) -> String {
@@ -14,6 +15,17 @@ pub fn window_rect(hwnd: HWND) -> Option<RECT> {
     let mut rect = RECT::default();
     unsafe { GetWindowRect(hwnd, &mut rect) }.ok()?;
     Some(rect)
+}
+
+/// Rectangle complet de l'écran (barre des tâches comprise), en pixels physiques.
+pub fn monitor_rect(monitor: HMONITOR) -> Option<RECT> {
+    let mut info = MONITORINFO {
+        cbSize: size_of::<MONITORINFO>() as u32,
+        ..Default::default()
+    };
+    unsafe { GetMonitorInfoW(monitor, &mut info) }
+        .as_bool()
+        .then_some(info.rcMonitor)
 }
 
 /// Fenêtre « cloaked » par DWM : techniquement visible mais non affichée (application UWP en veille, autre bureau virtuel).

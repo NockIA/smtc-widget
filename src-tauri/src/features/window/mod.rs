@@ -1,3 +1,4 @@
+mod bounds;
 pub mod commands;
 mod foreground;
 mod layout;
@@ -21,6 +22,7 @@ pub use placement::{current_scale, list_monitors};
 pub fn init_placement(window: WebviewWindow) {
     let prefs = window.state::<PreferencesStore>().snapshot();
 
+    bounds::limit_to_screen_bottom(&window);
     if let Err(e) = placement::place_on_preferred_monitor(&window, &prefs) {
         log::error!("placement de la fenêtre a échoué : {e}");
     }

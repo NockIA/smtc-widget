@@ -4,7 +4,7 @@ use std::thread;
 
 use tauri::{Emitter, WebviewWindow};
 use windows::Win32::Foundation::{HWND, LPARAM, RECT};
-use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromWindow};
+use windows::Win32::Graphics::Gdi::{MONITOR_DEFAULTTONEAREST, MonitorFromWindow};
 use windows::Win32::UI::Accessibility::{HWINEVENTHOOK, SetWinEventHook};
 use windows::Win32::UI::Shell::{
     QUNS_BUSY, QUNS_PRESENTATION_MODE, QUNS_RUNNING_D3D_FULL_SCREEN, SHQueryUserNotificationState,
@@ -17,7 +17,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 use windows::core::BOOL;
 
 use super::webview_memory;
-use super::win32::{class_name, is_cloaked, window_rect};
+use super::win32::{class_name, is_cloaked, monitor_rect, window_rect};
 
 /// Émis vers le front quand le widget est caché (`true`) ou réaffiché (`false`).
 const VISIBILITY_EVENT: &str = "widget-visibility";
@@ -110,18 +110,13 @@ unsafe extern "system" fn check_window(window: HWND, search: LPARAM) -> BOOL {
 /// (par exemple juste après avoir déplacé le widget sur un écran où une vidéo est déjà en plein écran).
 fn fullscreen_window_on_widget_screen() -> bool {
     let widget = HWND(WIDGET_HWND.load(Ordering::Relaxed) as *mut _);
-    let mut info = MONITORINFO {
-        cbSize: size_of::<MONITORINFO>() as u32,
-        ..Default::default()
-    };
-    let has_info = unsafe { GetMonitorInfoW(MonitorFromWindow(widget, MONITOR_DEFAULTTONEAREST), &mut info) };
-    if !has_info.as_bool() {
+    let Some(screen) = monitor_rect(unsafe { MonitorFromWindow(widget, MONITOR_DEFAULTTONEAREST) }) else {
         return false;
-    }
+    };
 
     let mut search = FullscreenSearch {
         widget,
-        screen: info.rcMonitor,
+        screen,
         found: false,
     };
     // Une énumération interrompue par le callback renvoie une erreur : ce n'est pas un échec.
