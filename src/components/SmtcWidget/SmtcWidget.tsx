@@ -1,10 +1,11 @@
 import { MouseEvent } from "react";
 
 import { useAlbumArt } from "@/hooks/useAlbumArt";
+import { useCurrentTrack } from "@/hooks/useCurrentTrack";
 import { useHoverPanel } from "@/hooks/useHoverPanel";
 import { useReservedWidth } from "@/hooks/useReservedWidth";
 import { useVolume } from "@/hooks/useVolume";
-import { TrackInfo } from "@/types/track.types";
+import { useWidgetHidden } from "@/hooks/useWidgetHidden";
 import { cx } from "@/utils/classNames.utils";
 import { commands } from "@/utils/commands.utils";
 
@@ -17,13 +18,9 @@ import "./SmtcWidget.css";
 
 const PANELS_HIDE_DELAY_MS = 3000;
 
-interface SmtcWidgetProps {
-  track: TrackInfo | null;
-  receivedAt: number;
-  hidden: boolean;
-}
-
-const SmtcWidget = ({ track, receivedAt, hidden }: SmtcWidgetProps) => {
+const SmtcWidget = () => {
+  const hidden = useWidgetHidden();
+  const { track, receivedAt } = useCurrentTrack(hidden);
   const { volume, setVolume } = useVolume(track?.source);
   const panels = useHoverPanel(PANELS_HIDE_DELAY_MS);
   const albumArt = useAlbumArt(track, receivedAt);

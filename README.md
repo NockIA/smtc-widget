@@ -69,7 +69,6 @@ sa logique et ses commandes Tauri.
 
 ```
 src/                          Front Preact / TypeScript
-  App.tsx                     Relie le morceau courant et la visibilité au widget
   assets/icons/               Icônes SVG (importées comme composants via SVGR, couleur héritée du thème)
   components/
     ErrorBoundary/            Repli affiché si le rendu plante (réessai automatique + bouton)

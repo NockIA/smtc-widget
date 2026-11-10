@@ -4,11 +4,10 @@ import ReactDOM from "react-dom/client";
 
 import "./styles/index.css";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+import SmtcWidget from "@/components/SmtcWidget/SmtcWidget";
 import { useSystemColors } from "@/hooks/useSystemColors";
 import { logger } from "@/utils/logger.utils";
 import { applyBackground } from "@/utils/systemColors.utils";
-
-import App from "./App";
 
 applyBackground(null);
 
@@ -23,7 +22,7 @@ const Root = () => {
   useSystemColors();
   return (
     <ErrorBoundary>
-      <App />
+      <SmtcWidget />
     </ErrorBoundary>
   );
 };
