@@ -73,7 +73,7 @@ src/                          Front Preact / TypeScript
   components/
     ErrorBoundary/            Repli affiché si le rendu plante (réessai automatique + bouton)
     IconButton/               Bouton rond avec icône SVG
-    SmtcWidget/               Widget (titre défilant, pochette, progression, volume, contrôles, poignée)
+    SmtcWidget/               Widget (titre défilant, pochette, progression, volume, contrôles, poignée de déplacement, coin de redimensionnement)
   constants/                  Constantes partagées, un fichier par constante (EVENTS.ts…)
   hooks/                      useCurrentTrack, useTauriEvent, useAlbumArt, useHoverPanel, useSystemColors, useVolume…
   styles/                     Variables de couleur (_colors.css), reset, styles globaux

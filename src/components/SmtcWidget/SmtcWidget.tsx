@@ -11,6 +11,7 @@ import { commands } from "@/utils/commands.utils";
 
 import DragHandle from "./DragHandle/DragHandle";
 import MediaControls from "./MediaControls/MediaControls";
+import ResizeHandle from "./ResizeHandle/ResizeHandle";
 import TrackProgress from "./TrackProgress/TrackProgress";
 import TrackText from "./TrackText/TrackText";
 import VolumeControl from "./VolumeControl/VolumeControl";
@@ -46,6 +47,7 @@ const SmtcWidget = () => {
     >
       <div className={cx("widget-handle", panels.visible && "visible")}>
         <DragHandle />
+        <ResizeHandle />
       </div>
       <div className={cx("widget-content", panels.visible && "shifted")}>
         {albumArt && <img className="album-art" src={albumArt} alt="" />}

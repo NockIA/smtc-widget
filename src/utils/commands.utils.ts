@@ -27,4 +27,6 @@ export const commands = {
   getSystemColors: () => call<SystemColors>("get_system_colors"),
   refreshSystemColors: () => call("refresh_system_colors"),
   showContextMenu: (x: number) => call("show_context_menu", { x }),
+  startResize: () => call("start_resize"),
+  resetSize: () => call("reset_size"),
 };
