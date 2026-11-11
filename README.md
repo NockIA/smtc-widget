@@ -2,6 +2,39 @@
 
 Petit widget Windows (Tauri 2 + Preact + TypeScript) qui reste au-dessus de la barre des tâches et affiche la musique / media en cours de lecture via SMTC.
 
+![Le widget posé sur la barre des tâches](docs/screenshot_default.png)
+
+## Fonctionnalités
+
+- Affiche le morceau en cours (titre et artiste défilants, pochette, progression) pour toute application compatible SMTC : Spotify, navigateurs, lecteurs vidéo…
+- Contrôles précédent, lecture/pause et suivant, et volume réglable par application.
+- Choix de la source audio quand plusieurs applications jouent en même temps.
+- Thèmes Système, Clair, Sombre et Transparent (fond du widget invisible, la barre des tâches reste visible derrière).
+- Redimensionnement en gardant les proportions, de 75 % à 200 %.
+- Position et taille mémorisées séparément pour chaque écran, avec déplacement possible vers un autre écran.
+- Placé par défaut juste à gauche de la zone de notification, et jamais plus bas que le bord de l'écran.
+- Masqué automatiquement quand une application est en plein écran.
+- Lancement automatique au démarrage de Windows (optionnel).
+
+## Utilisation
+
+- **Voir les contrôles** : survoler le widget.
+- **Déplacer** : faire glisser la poignée à gauche du widget.
+- **Redimensionner** : faire glisser le coin haut gauche. Un double-clic sur ce coin remet la taille d'origine.
+- **Menu** : clic droit sur le widget pour choisir la piste audio, déplacer le widget vers un autre écran, changer de thème, réinitialiser la taille, activer le lancement au démarrage ou quitter.
+
+![Le menu du clic droit](docs/screenshot_menu.png)
+
+## Installation
+
+Une seule instance du widget peut tourner à la fois.
+
+1. Construire l'installateur : `npm run tauri build` (voir les prérequis ci-dessous).
+2. Lancer l'installateur NSIS généré dans `src-tauri/target/release/bundle/nsis/`.
+3. Démarrer « smtc-widget » : le widget apparaît à gauche de la zone de notification. Le menu du clic droit permet de l'activer au démarrage de Windows.
+
+Pour le désinstaller, passer par « Applications et fonctionnalités » de Windows. Les préférences et les journaux restent dans `%APPDATA%com.nockia.smtc-widget` et `%LOCALAPPDATA%com.nockia.smtc-widget`.
+
 ## Prérequis
 
 - Windows 10 ou 11 (actuellement setup pour Windows 10)
@@ -9,7 +42,7 @@ Petit widget Windows (Tauri 2 + Preact + TypeScript) qui reste au-dessus de la b
 - [Rust](https://rustup.rs/) (via `rustup`) avec les Build Tools Visual Studio (charge de travail « Développement Desktop en C++ »)
 - WebView2 (déjà présent avec Edge sur la plupart des machines)
 
-## Installation
+## Installer les dépendances
 
 ```bash
 npm install
@@ -110,3 +143,9 @@ Les constantes restent en tête du fichier qui les utilise.
 ## Environnement de développement conseillé
 
 - [Zed](https://zed.dev/) avec l'extension Rust (rust-analyzer est intégré)
+
+## À propos de ce projet
+
+Ce projet est aussi un terrain d'apprentissage, notamment pour Rust et Tauri. Je me suis appuyé en partie sur l'IA (Claude, d'Anthropic) pour me guider, relire mon code, comprendre des concepts (propriété, threads, `unsafe`, API Windows…) et trouver des pistes d'amélioration.
+
+Le code peut donc être imparfait, je reste donc ouvert à tous les conseils et axes d'amélioration, que ce soit sur le code, l'architecture ou les bonnes pratiques, n'hésitez pas à ouvrir une issue ou une discussion.

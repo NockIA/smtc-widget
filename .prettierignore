@@ -3,3 +3,4 @@ node_modules
 src-tauri
 .vscode
 package-lock.json
+docs/
