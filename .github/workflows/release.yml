@@ -1,0 +1,53 @@
+name: Release
+
+# Déclenche lorsqu'on push un tag (pas un simple git push)
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # On utilise une VM windows car l'app utilise des API Windows,
+    # et l'installateur NSIS se construit sur cette platforme
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          # Cargo.toml n'est pas à la racine, donc on indique où se trouve le projet Rust
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      # Les vérifications passent avant le build : si l'une échoue, aucune Release n'est créée
+      - run: npm run lint
+
+      - run: npm run format:check
+
+      - run: cargo fmt --check
+        working-directory: src-tauri
+
+      - run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "SMTC Widget ${{ github.ref_name }}"
+          releaseDraft: true

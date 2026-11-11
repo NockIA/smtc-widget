@@ -29,11 +29,13 @@ Petit widget Windows (Tauri 2 + Preact + TypeScript) qui reste au-dessus de la b
 
 Une seule instance du widget peut tourner à la fois.
 
-1. Construire l'installateur : `npm run tauri build` (voir les prérequis ci-dessous).
-2. Lancer l'installateur NSIS généré dans `src-tauri/target/release/bundle/nsis/`.
+1. Télécharger le dernier installateur (`smtc-widget_x.y.z_x64-setup.exe`) depuis la page [Releases](https://github.com/NockIA/smtc-widget/releases).
+2. Le lancer. L'installateur n'est pas signé : Windows SmartScreen peut afficher « Windows a protégé votre ordinateur ». Cliquer sur « Informations complémentaires » puis « Exécuter quand même ».
 3. Démarrer « smtc-widget » : le widget apparaît à gauche de la zone de notification. Le menu du clic droit permet de l'activer au démarrage de Windows.
 
-Pour le désinstaller, passer par « Applications et fonctionnalités » de Windows. Les préférences et les journaux restent dans `%APPDATA%com.nockia.smtc-widget` et `%LOCALAPPDATA%com.nockia.smtc-widget`.
+Pour le désinstaller, passer par « Applications et fonctionnalités » de Windows. Les préférences et les journaux restent dans `%APPDATA%\com.nockia.smtc-widget` et `%LOCALAPPDATA%\com.nockia.smtc-widget`.
+
+Pour compiler l'installateur soi-même, voir les prérequis et la commande `npm run tauri build` ci-dessous.
 
 ## Prérequis
 
