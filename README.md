@@ -51,14 +51,14 @@ Si le widget affiche « Une erreur est survenue » (triangle rouge) ou se compor
 le détail est dans le journal de log, écrit aussi bien en développement qu'en release :
 
 ```
-%LOCALAPPDATA%\com.iseen.smtc-widget\logs\smtc-widget.log
+%LOCALAPPDATA%\com.nockia.smtc-widget\logs\smtc-widget.log
 ```
 
 - Le backend (Rust) et le front (préfixe `[front]`) écrivent dans le même fichier.
 - Niveau `info` en release, `debug` en développement (où les logs sont aussi affichés dans la console).
 - Le fichier est limité à 512 Ko : au-delà, il est archivé (un seul ancien fichier conservé, dans le même dossier) et un nouveau est créé.
 - Les plantages (panic) y sont aussi consignés.
-- Le front ne reçoit jamais le message d'erreur brut, seulement un code (`smtc_unavailable`, `audio_unavailable`, `internal`) :
+- Le front ne reçoit jamais le message d'erreur brut, seulement un code (`smtc_unavailable`, `internal`) :
   le détail complet n'existe que dans ce journal.
 - Si le rendu plante, le widget affiche un repli puis réessaie seul au bout de 5 s ; le bouton ↻ force un nouvel essai.
 
@@ -91,13 +91,13 @@ src-tauri/                    Backend Rust et configuration Tauri
       audio_source/           Source audio choisie (état, liste des sources)
       volume/                 Volume par application (WASAPI), poussé au front à chaque changement
       window/                 Placement et taille par écran (redimensionnement par le coin haut gauche, proportions conservées), premier plan, plein écran, écrans branchés
-      preferences/            Fichier de préférences unique (thème, position par écran)
-      appearance/             Thème appliqué, couleurs système (barre des tâches, accent)
+      preferences/            Fichier de préférences unique (thème, position et taille par écran)
+      appearance/             Thème appliqué (système, clair, sombre, transparent), couleurs système (barre des tâches, accent)
       context_menu/           Menu du clic droit (piste audio, écran, thème, taille, quitter)
 ```
 
 Dans chaque feature, les fichiers sont répartis par rôle : `models.rs` (types),
-`service.rs` ou `services/` (logique), `commands.rs` (commandes Tauri), `state.rs` (état partagé).
+`service.rs` (logique), `commands.rs` (commandes Tauri), `state.rs` (état partagé).
 Les constantes restent en tête du fichier qui les utilise.
 
 ## Conventions front
