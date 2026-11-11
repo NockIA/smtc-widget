@@ -93,7 +93,7 @@ src-tauri/                    Backend Rust et configuration Tauri
       window/                 Placement et taille par écran (redimensionnement par le coin haut gauche, proportions conservées), premier plan, plein écran, écrans branchés
       preferences/            Fichier de préférences unique (thème, position par écran)
       appearance/             Thème appliqué, couleurs système (barre des tâches, accent)
-      context_menu/           Menu du clic droit (piste audio, écran, thème, quitter)
+      context_menu/           Menu du clic droit (piste audio, écran, thème, taille, quitter)
 ```
 
 Dans chaque feature, les fichiers sont répartis par rôle : `models.rs` (types),

@@ -2,6 +2,7 @@ use crate::features::preferences::ThemePreference;
 
 const AUTOSTART_ID: &str = "autostart";
 const QUIT_ID: &str = "quit";
+const RESET_SIZE_ID: &str = "reset-size";
 const SOURCE_PREFIX: &str = "source:";
 const MONITOR_PREFIX: &str = "monitor:";
 const THEME_PREFIX: &str = "theme:";
@@ -13,6 +14,7 @@ pub enum MenuAction {
     Monitor(String),
     Theme(ThemePreference),
     Autostart,
+    ResetSize,
     Quit,
 }
 
@@ -23,6 +25,7 @@ impl MenuAction {
             Self::Monitor(key) => format!("{MONITOR_PREFIX}{key}"),
             Self::Theme(theme) => format!("{THEME_PREFIX}{}", theme.id()),
             Self::Autostart => AUTOSTART_ID.to_owned(),
+            Self::ResetSize => RESET_SIZE_ID.to_owned(),
             Self::Quit => QUIT_ID.to_owned(),
         }
     }
@@ -30,6 +33,7 @@ impl MenuAction {
     pub fn parse(id: &str) -> Option<Self> {
         match id {
             AUTOSTART_ID => Some(Self::Autostart),
+            RESET_SIZE_ID => Some(Self::ResetSize),
             QUIT_ID => Some(Self::Quit),
             _ => {
                 if let Some(source) = id.strip_prefix(SOURCE_PREFIX) {

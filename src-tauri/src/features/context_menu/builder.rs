@@ -65,6 +65,13 @@ pub fn build_menu(app: &AppHandle, window: &WebviewWindow) -> AppResult<Menu<Wry
             &monitor_submenu(app, window)?,
             &theme_submenu(app)?,
             &PredefinedMenuItem::separator(app)?,
+            &MenuItem::with_id(
+                app,
+                MenuAction::ResetSize.id(),
+                "Réinitialiser la taille",
+                true,
+                None::<&str>,
+            )?,
             &check_item(app, &MenuAction::Autostart, "Lancer au démarrage", autostart_enabled)?,
             &MenuItem::with_id(app, MenuAction::Quit.id(), "Quitter", true, None::<&str>)?,
         ],

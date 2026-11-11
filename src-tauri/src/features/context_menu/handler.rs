@@ -31,6 +31,12 @@ fn move_to_monitor(app: &AppHandle, key: &str) {
     }
 }
 
+fn reset_size(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        window::reset_size(&window);
+    }
+}
+
 fn toggle_autostart(app: &AppHandle) {
     let autolaunch = app.autolaunch();
     let result = if autolaunch.is_enabled().unwrap_or(false) {
@@ -51,6 +57,7 @@ pub fn handle_menu_event(app: &AppHandle, event: MenuEvent) {
     match action {
         MenuAction::Quit => app.exit(0),
         MenuAction::Autostart => toggle_autostart(app),
+        MenuAction::ResetSize => reset_size(app),
         MenuAction::Source(id) => app.state::<AudioSourceState>().select_source(id),
         MenuAction::Monitor(key) => move_to_monitor(app, &key),
         MenuAction::Theme(theme) => set_theme(app, theme),
