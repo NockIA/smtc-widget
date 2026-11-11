@@ -14,6 +14,7 @@
       {
         "title": "smtc-widget",
         "decorations": false,
+        "resizable": false,
         "transparent": true,
         "shadow": false,
         "width": 250,
