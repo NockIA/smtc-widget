@@ -14,7 +14,7 @@ type MediaAction = "previous" | "togglePlayPause" | "next";
 const call = <T = void>(command: string, args?: InvokeArgs): Promise<T | undefined> =>
   invoke<T>(command, args).catch((error: unknown) => {
     const code = (error as { code?: unknown } | null)?.code ?? "inconnu";
-    logger.error(`commande ${command} a échoué (${String(code)})`);
+    logger.error(`échec de la commande ${command} : ${String(code)}`);
     return undefined;
   });
 

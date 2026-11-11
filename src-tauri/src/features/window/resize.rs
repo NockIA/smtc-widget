@@ -71,8 +71,9 @@ impl Anchored {
     }
 }
 
-fn left_button_down() -> bool {
-    // Bit de poids fort = bouton enfoncé.
+fn is_left_button_down() -> bool {
+    // Windows renvoie un nombre dont le premier bit (celui qui, dans un nombre signé, indique qu'il est négatif)
+    // vaut 1 quand le bouton est enfoncé : un résultat négatif signifie donc « enfoncé ».
     unsafe { GetAsyncKeyState(i32::from(VK_LBUTTON.0)) < 0 }
 }
 
@@ -91,7 +92,7 @@ fn drag(window: &WebviewWindow) -> ResizeResult {
     };
     let started = Instant::now();
 
-    while left_button_down() && started.elapsed() < MAX_DRAG_DURATION && !is_hidden() {
+    while is_left_button_down() && started.elapsed() < MAX_DRAG_DURATION && !is_hidden() {
         if let Some(x) = cursor_x() {
             let width = start_width + f64::from(start_x - x);
             anchored.resize(window, clamp_scale(scale_from_width(width, anchored.dpi)))?;

@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 use tauri::{Manager, WebviewWindow};
 
 use super::foreground::is_hidden;
-use super::placement::{monitors_signature, place_on_preferred_monitor};
+use super::placement::{compute_monitors_signature, place_on_preferred_monitor};
 use crate::features::preferences::PreferencesStore;
 
 /// Délai pendant lequel les déplacements sont ignorés après un changement d'écrans.
@@ -23,12 +23,12 @@ pub fn is_stable(window: &WebviewWindow) -> tauri::Result<bool> {
         .lock()
         .unwrap()
         .is_none_or(|until| Instant::now() >= until);
-    Ok(settled && monitors_signature(window)? == *KNOWN_SIGNATURE.lock().unwrap())
+    Ok(settled && compute_monitors_signature(window)? == *KNOWN_SIGNATURE.lock().unwrap())
 }
 
 /// Replace la fenêtre quand la liste des écrans change.
 pub fn watch(window: WebviewWindow) {
-    match monitors_signature(&window) {
+    match compute_monitors_signature(&window) {
         Ok(signature) => *KNOWN_SIGNATURE.lock().unwrap() = signature,
         Err(e) => {
             log::error!("lecture des écrans a échoué : {e}");
@@ -43,7 +43,7 @@ pub fn watch(window: WebviewWindow) {
                 continue;
             }
 
-            let Ok(signature) = monitors_signature(&window) else {
+            let Ok(signature) = compute_monitors_signature(&window) else {
                 continue;
             };
             if signature == *KNOWN_SIGNATURE.lock().unwrap() {

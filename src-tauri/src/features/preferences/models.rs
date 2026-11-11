@@ -22,7 +22,6 @@ pub enum ThemePreference {
     System,
     Light,
     Dark,
-    /// Palette du thème système, sans fond : la barre des tâches reste visible derrière le widget.
     Transparent,
 }
 

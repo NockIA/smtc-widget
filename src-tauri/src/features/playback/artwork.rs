@@ -16,7 +16,8 @@ use crate::shared::smtc::{Session, active_session, source_id};
 
 const DEFAULT_MIME: &str = "image/jpeg";
 
-/// Côté de la miniature envoyée au front : l'image est affichée à 30 px, 96 px suffit jusqu'à 300 % de DPI.
+/// Dimension (en pixels) de la miniature carrée envoyée au front. Affichée en 30 px CSS,
+/// elle reste nette jusqu'à 96 px à l'écran (par exemple 300 % de DPI avec le widget à taille normale).
 const THUMBNAIL_SIZE_PX: u32 = 96;
 
 /// Dernière pochette lue, avec la clé du morceau correspondant (évite de relire le flux).
@@ -61,7 +62,9 @@ fn read_all(stream: &IRandomAccessStream) -> windows::core::Result<Vec<u8>> {
     Ok(bytes)
 }
 
-/// Réduit l'image en carré (mise à l'échelle puis recadrage centré) et la réencode en JPEG.
+/// Les pochettes fournies par les sources sont souvent très grandes (plusieurs centaines de ko, voire des Mo),
+/// alors que le widget les affiche en quelques dizaines de pixels : on les réduit pour alléger ce qui passe au front.
+/// L'image est mise à l'échelle puis recadrée au centre en carré, et réencodée en JPEG.
 fn shrink(source: &IRandomAccessStream) -> windows::core::Result<Vec<u8>> {
     source.Seek(0)?;
     let decoder = BitmapDecoder::CreateAsync(source)?.join()?;
@@ -122,8 +125,8 @@ fn to_data_url(artwork: &IRandomAccessStreamWithContentType) -> windows::core::R
     Ok(format!("data:{mime};base64,{}", STANDARD.encode(bytes)))
 }
 
-/// Pochette du morceau de la source choisie, en data URL. `None` si le morceau n'en a pas
-/// (ou pas encore : certaines sources la fournissent après le titre).
+/// Pochette du morceau de la source choisie, en data URL.
+/// `None` si le morceau n'en a pas (ou pas encore : certaines sources la fournissent après le titre).
 pub fn get_album_art(selected: Option<&str>) -> windows::core::Result<Option<String>> {
     let Some(session) = active_session(selected)? else {
         return Ok(None);

@@ -17,7 +17,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 use windows::core::BOOL;
 
 use super::webview_memory;
-use super::win32::{class_name, is_cloaked, monitor_rect, window_rect};
+use super::win32::{get_monitor_rect, get_window_class_name, get_window_screen_rect, is_cloaked};
 
 /// Émis vers le front quand le widget est caché (`true`) ou réaffiché (`false`).
 const VISIBILITY_EVENT: &str = "widget-visibility";
@@ -25,14 +25,22 @@ const VISIBILITY_EVENT: &str = "widget-visibility";
 /// Contrôle de secours du premier plan, en plus des changements de fenêtre active.
 const TOPMOST_FALLBACK_INTERVAL_MS: u32 = 2_000;
 
-/// Fenêtres du bureau et de la barre des tâches : elles couvrent l'écran sans être des applications plein écran.
+/// Classes des fenêtres de l'interface de Windows : elles couvrent l'écran sans être des applications plein écran.
+/// - `Progman` : le bureau (arrière-plan avec les icônes).
+/// - `WorkerW` : fenêtre auxiliaire du bureau, qui affiche notamment le fond d'écran animé ou en diaporama.
+/// - `Shell_TrayWnd` : la barre des tâches de l'écran principal.
+/// - `Shell_SecondaryTrayWnd` : la barre des tâches des écrans secondaires.
 const SHELL_CLASSES: [&str; 4] = ["Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"];
 
 static WIDGET: OnceLock<WebviewWindow> = OnceLock::new();
+
 /// Lu une fois au démarrage : `window.hwnd()` passe par le thread principal. Valeur brute car HWND n'est pas `Send`.
 static WIDGET_HWND: AtomicIsize = AtomicIsize::new(0);
+
+/// Indique si le widget est caché par un plein écran
 static HIDDEN: AtomicBool = AtomicBool::new(false);
-/// Tant que c'est vrai, la fenêtre n'est plus remise au premier plan : sinon elle recouvre le menu contextuel.
+
+/// Tant que c'est vrai, la fenêtre n'est plus remise au premier plan.
 static PAUSED: AtomicBool = AtomicBool::new(false);
 
 pub struct PauseGuard;
@@ -56,7 +64,7 @@ pub fn is_hidden() -> bool {
 }
 
 /// Windows signale les jeux Direct3D exclusifs et le mode présentation, mais pas toujours une vidéo de navigateur.
-fn notification_state_is_fullscreen() -> bool {
+fn is_notification_state_fullscreen() -> bool {
     match unsafe { SHQueryUserNotificationState() } {
         Ok(state) => matches!(state, QUNS_BUSY | QUNS_PRESENTATION_MODE | QUNS_RUNNING_D3D_FULL_SCREEN),
         // En cas d'erreur, on reste visible.
@@ -81,7 +89,7 @@ impl FullscreenSearch {
         {
             return false;
         }
-        let Some(rect) = window_rect(window) else {
+        let Some(rect) = get_window_screen_rect(window) else {
             return false;
         };
         let covers_screen = rect.left <= self.screen.left
@@ -95,11 +103,11 @@ impl FullscreenSearch {
         // Les surcouches (Game Bar, enregistreurs d'écran…) couvrent l'écran sans le monopoliser : elles laissent passer les clics.
         let style = unsafe { GetWindowLongPtrW(window, GWL_EXSTYLE) } as u32;
         let click_through = style & (WS_EX_TRANSPARENT.0 | WS_EX_NOACTIVATE.0) != 0;
-        !click_through && !is_cloaked(window) && !SHELL_CLASSES.contains(&class_name(window).as_str())
+        !click_through && !is_cloaked(window) && !SHELL_CLASSES.contains(&get_window_class_name(window).as_str())
     }
 }
 
-unsafe extern "system" fn check_window(window: HWND, search: LPARAM) -> BOOL {
+unsafe extern "system" fn is_search_continuing(window: HWND, search: LPARAM) -> BOOL {
     let search = unsafe { &mut *(search.0 as *mut FullscreenSearch) };
     search.found = search.is_fullscreen(window);
     // Arrête l'énumération dès qu'une fenêtre plein écran est trouvée.
@@ -108,9 +116,9 @@ unsafe extern "system" fn check_window(window: HWND, search: LPARAM) -> BOOL {
 
 /// Vrai si une application recouvre tout l'écran où se trouve le widget, qu'elle soit active ou non
 /// (par exemple juste après avoir déplacé le widget sur un écran où une vidéo est déjà en plein écran).
-fn fullscreen_window_on_widget_screen() -> bool {
+fn has_fullscreen_window_on_widget_screen() -> bool {
     let widget = HWND(WIDGET_HWND.load(Ordering::Relaxed) as *mut _);
-    let Some(screen) = monitor_rect(unsafe { MonitorFromWindow(widget, MONITOR_DEFAULTTONEAREST) }) else {
+    let Some(screen) = get_monitor_rect(unsafe { MonitorFromWindow(widget, MONITOR_DEFAULTTONEAREST) }) else {
         return false;
     };
 
@@ -120,15 +128,14 @@ fn fullscreen_window_on_widget_screen() -> bool {
         found: false,
     };
     // Une énumération interrompue par le callback renvoie une erreur : ce n'est pas un échec.
-    let _ = unsafe { EnumWindows(Some(check_window), LPARAM(&raw mut search as isize)) };
+    let _ = unsafe { EnumWindows(Some(is_search_continuing), LPARAM(&raw mut search as isize)) };
     search.found
 }
 
-/// Ce qui indique qu'une application plein écran recouvre le widget, `None` sinon.
 fn fullscreen_cause() -> Option<&'static str> {
-    if notification_state_is_fullscreen() {
+    if is_notification_state_fullscreen() {
         Some("état de notification Windows")
-    } else if fullscreen_window_on_widget_screen() {
+    } else if has_fullscreen_window_on_widget_screen() {
         Some("fenêtre plein écran sur l'écran du widget")
     } else {
         None
@@ -162,7 +169,7 @@ fn sync_visibility(window: &WebviewWindow) -> bool {
     fullscreen
 }
 
-/// Remet la fenêtre devant la barre des tâches : change uniquement le z-order, ni position, ni taille, ni focus.
+/// Remet la fenêtre devant la barre des tâches, change uniquement le z-order
 fn raise_to_top() {
     let hwnd = HWND(WIDGET_HWND.load(Ordering::Relaxed) as *mut _);
     let result = unsafe {
@@ -181,7 +188,6 @@ fn raise_to_top() {
     }
 }
 
-/// Réévalue tout de suite visibilité et premier plan (déplacement du widget, fin d'un menu…).
 pub fn refresh() {
     if PAUSED.load(Ordering::Relaxed) {
         return;

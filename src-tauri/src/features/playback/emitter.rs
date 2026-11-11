@@ -4,7 +4,6 @@ use tauri::{AppHandle, Emitter};
 
 use super::models::TrackInfo;
 
-/// Nom de l'événement écouté par le front.
 const MEDIA_CHANGED_EVENT: &str = "media-changed";
 
 /// Écart de position (en ms) au-delà duquel on considère qu'il y a eu un saut (seek).
@@ -18,7 +17,7 @@ struct Emitted {
 
 impl Emitted {
     /// Compare la position reçue à celle que le front a interpolée depuis cette émission.
-    fn position_jumped(&self, previous: &TrackInfo, current: &TrackInfo) -> bool {
+    fn has_position_jumped(&self, previous: &TrackInfo, current: &TrackInfo) -> bool {
         let elapsed_ms = if previous.is_playing {
             self.at.elapsed().as_millis() as u64
         } else {
@@ -41,7 +40,9 @@ impl TrackEmitter {
         };
         match (last.track.as_ref(), track) {
             (None, None) => false,
-            (Some(previous), Some(current)) => !previous.same_state(current) || last.position_jumped(previous, current),
+            (Some(previous), Some(current)) => {
+                !previous.is_same_state(current) || last.has_position_jumped(previous, current)
+            }
             _ => true,
         }
     }

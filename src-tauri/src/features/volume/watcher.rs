@@ -19,7 +19,6 @@ use windows::core::{BOOL, GUID, PCWSTR, Ref, implement};
 
 use super::service::{self, ComGuard, WIDGET_CONTEXT};
 
-/// Nom de l'événement écouté par le front.
 const VOLUME_CHANGED_EVENT: &str = "volume-changed";
 
 /// Regroupe les rafales (glissé du curseur dans le mélangeur Windows).

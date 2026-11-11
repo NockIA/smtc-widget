@@ -16,7 +16,7 @@ pub struct TrackInfo {
 
 impl TrackInfo {
     /// Même morceau dans le même état (hors position, qui avance en continu).
-    pub fn same_state(&self, other: &Self) -> bool {
+    pub fn is_same_state(&self, other: &Self) -> bool {
         self.title == other.title
             && self.artist == other.artist
             && self.album == other.album

@@ -3,7 +3,7 @@ use windows::Win32::Foundation::{HWND, LPARAM, RECT};
 use windows::Win32::UI::WindowsAndMessaging::{EnumChildWindows, EnumWindows, GetParent, IsWindowVisible};
 use windows::core::BOOL;
 
-use super::win32::{class_name, window_rect};
+use super::win32::{get_window_class_name, get_window_screen_rect};
 
 /// Marge vide (pixels logiques) entre le bord gauche de la fenêtre météo et son icône.
 const WEATHER_INNER_PADDING: f64 = 12.0;
@@ -21,7 +21,7 @@ struct Child {
 
 unsafe extern "system" fn collect_taskbar(hwnd: HWND, list: LPARAM) -> BOOL {
     let list = unsafe { &mut *(list.0 as *mut Vec<HWND>) };
-    if TASKBAR_CLASSES.contains(&class_name(hwnd).as_str()) {
+    if TASKBAR_CLASSES.contains(&get_window_class_name(hwnd).as_str()) {
         list.push(hwnd);
     }
     true.into()
@@ -54,14 +54,14 @@ fn direct_children(taskbar: HWND) -> Vec<Child> {
         .filter(|&hwnd| unsafe { IsWindowVisible(hwnd) }.as_bool())
         .filter_map(|hwnd| {
             Some(Child {
-                class: class_name(hwnd),
-                rect: window_rect(hwnd)?,
+                class: get_window_class_name(hwnd),
+                rect: get_window_screen_rect(hwnd)?,
             })
         })
         .collect()
 }
 
-fn on_monitor(rect: &RECT, monitor: &Monitor) -> bool {
+fn is_on_monitor(rect: &RECT, monitor: &Monitor) -> bool {
     let center_x = i32::midpoint(rect.left, rect.right);
     let center_y = i32::midpoint(rect.top, rect.bottom);
     let position = monitor.position();
@@ -72,13 +72,14 @@ fn on_monitor(rect: &RECT, monitor: &Monitor) -> bool {
         && center_y < position.y + size.height as i32
 }
 
-/// Bord gauche (pixels physiques) des éléments à droite de la barre des tâches de cet écran
-/// (météo, zone de notification, horloge). `None` si la barre n'est pas lisible : absente,
-/// masquée automatiquement, verticale, ou structure inconnue (Windows 11).
-pub fn right_cluster_left(monitor: &Monitor) -> Option<i32> {
+/// Cherche où commence, en pixels physiques, la zone système à droite de la barre des tâches (météo, notifications, horloge).
+/// Pour cela, elle prend la barre horizontale de l'écran, puis le bord gauche le plus à gauche de ses éléments
+/// situés après la liste des applications.
+/// `None` si la barre n'est pas lisible (masquée, verticale, structure inconnue…).
+pub fn find_system_area_left_edge(monitor: &Monitor) -> Option<i32> {
     let taskbar = taskbars().into_iter().find(|&hwnd| {
-        window_rect(hwnd)
-            .is_some_and(|rect| on_monitor(&rect, monitor) && rect.right - rect.left > rect.bottom - rect.top)
+        get_window_screen_rect(hwnd)
+            .is_some_and(|rect| is_on_monitor(&rect, monitor) && rect.right - rect.left > rect.bottom - rect.top)
     })?;
 
     let children = direct_children(taskbar);

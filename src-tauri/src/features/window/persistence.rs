@@ -22,7 +22,7 @@ fn save_current_position(window: &WebviewWindow) -> AppResult<()> {
     };
     let key = monitor_key(&monitor);
     let current = current_placement(window, &monitor)?;
-    let default = default_placement(window, &monitor)?;
+    let default = default_placement(&monitor);
 
     window.state::<PreferencesStore>().update(|prefs| {
         prefs.last_monitor = Some(key.clone());

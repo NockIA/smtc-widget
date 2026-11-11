@@ -33,7 +33,7 @@ impl Drop for ComGuard {
 
 /// Vrai si l'exécutable correspond à la source SMTC : nom identique
 /// ("Spotify.exe") ou nom contenu dans l'identifiant (paquet du Store, "Chrome", etc.).
-fn source_matches(source: &str, exe: &str) -> bool {
+fn is_source_matching(source: &str, exe: &str) -> bool {
     let source = source.to_lowercase();
     let exe = exe.to_lowercase();
     if source == exe {
@@ -66,7 +66,7 @@ pub(super) fn source_sessions(
         for index in 0..sessions.GetCount()? {
             let control = sessions.GetSession(index)?;
             let pid = control.cast::<IAudioSessionControl2>()?.GetProcessId()?;
-            if pid != 0 && process::exe_name(pid).is_some_and(|exe| source_matches(source, &exe)) {
+            if pid != 0 && process::exe_name(pid).is_some_and(|exe| is_source_matching(source, &exe)) {
                 matching.push(control);
             }
         }

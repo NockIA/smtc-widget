@@ -2,7 +2,8 @@ use tauri::WebviewWindow;
 
 use crate::features::preferences::ThemePreference;
 
-/// Le thème de la fenêtre pilote `prefers-color-scheme` dans le webview ; `None` suit Windows.
+/// Applique le thème à la fenêtre, ce qui définit aussi `prefers-color-scheme` dans le webview.
+/// « Système » et « Transparent » ne forcent rien : la fenêtre suit le thème de Windows.
 pub fn apply_theme(window: &WebviewWindow, theme: ThemePreference) -> tauri::Result<()> {
     let tauri_theme = match theme {
         ThemePreference::System | ThemePreference::Transparent => None,

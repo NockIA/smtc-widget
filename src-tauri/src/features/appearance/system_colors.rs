@@ -16,9 +16,12 @@ use super::models::SystemColors;
 use crate::features::preferences::{PreferencesStore, ThemePreference};
 use crate::features::window;
 
+/// Nombre minimal de pixels qu'il faut avoir pour calculer la couleur de la taskbar
 const MIN_SAMPLES: usize = 3;
+
 /// Distance minimale entre un point d'échantillonnage et le widget, qui recouvre la barre.
 const WINDOW_MARGIN_PX: i32 = 8;
+
 /// Les points sont pris sur une ligne proche du bord de la barre, là où il y a le moins d'icônes.
 const ROW_OFFSET_PX: i32 = 3;
 
@@ -28,7 +31,6 @@ const TRIGGER_DEBOUNCE: Duration = Duration::from_millis(300);
 /// Contrôle de secours (changement de fond d'écran, transparence de la barre).
 const FALLBACK_INTERVAL: Duration = Duration::from_secs(60);
 
-/// Nom de l'événement écouté par le front.
 const SYSTEM_COLORS_EVENT: &str = "system-colors";
 
 type Rgb = [u8; 3];
@@ -42,18 +44,19 @@ pub fn request_refresh() {
     }
 }
 
-fn hex([r, g, b]: Rgb) -> String {
+fn rgb_to_hex([r, g, b]: Rgb) -> String {
     format!("#{r:02x}{g:02x}{b:02x}")
 }
 
-fn inside(position: PhysicalPosition<i32>, size: PhysicalSize<u32>, x: i32, y: i32) -> bool {
-    x >= position.x && y >= position.y && x < position.x + size.width as i32 && y < position.y + size.height as i32
+/// Vrai si le point (`x`, `y`) est dans le rectangle donné. Les bords gauche et haut sont inclus, droit et bas exclus.
+fn is_in_rect(origin: PhysicalPosition<i32>, size: PhysicalSize<u32>, x: i32, y: i32) -> bool {
+    x >= origin.x && y >= origin.y && x < origin.x + size.width as i32 && y < origin.y + size.height as i32
 }
 
-/// La barre des tâches occupe la différence entre l'écran et sa zone de travail.
-fn on_taskbar(monitor: &Monitor, x: i32, y: i32) -> bool {
+/// Vrai si le point est sur l'écran mais hors de sa zone de travail : c'est la place de la barre des tâches.
+fn is_on_taskbar(monitor: &Monitor, x: i32, y: i32) -> bool {
     let work = monitor.work_area();
-    inside(*monitor.position(), *monitor.size(), x, y) && !inside(work.position, work.size, x, y)
+    is_in_rect(*monitor.position(), *monitor.size(), x, y) && !is_in_rect(work.position, work.size, x, y)
 }
 
 /// Capture une ligne d'écran de 1 px de haut en une seule copie (au lieu d'un `GetPixel` par point).
@@ -109,7 +112,7 @@ fn capture_row(left: i32, y: i32, width: i32) -> Option<Vec<Rgb>> {
     }
 }
 
-/// Médiane par canal : insensible aux icônes (minoritaires) et au grain de l'acrylique.
+/// Calcul la couleur médiane d'une list de pixels RGB, canal par canal
 fn median(pixels: &[Rgb]) -> Rgb {
     let channel = |index: usize| {
         let mut values: Vec<u8> = pixels.iter().map(|p| p[index]).collect();
@@ -130,7 +133,7 @@ fn taskbar_color(window: &WebviewWindow) -> tauri::Result<Option<String>> {
 
     let center_x = position.x + size.width as i32 / 2;
     let center_y = position.y + size.height as i32 / 2;
-    if !on_taskbar(&monitor, center_x, center_y) {
+    if !is_on_taskbar(&monitor, center_x, center_y) {
         return Ok(None);
     }
 
@@ -145,20 +148,20 @@ fn taskbar_color(window: &WebviewWindow) -> tauri::Result<Option<String>> {
         .enumerate()
         .map(|(offset, pixel)| (left + offset as i32, pixel))
         .filter(|&(x, _)| x < position.x - WINDOW_MARGIN_PX || x > position.x + size.width as i32 + WINDOW_MARGIN_PX)
-        .filter(|&(x, _)| on_taskbar(&monitor, x, y))
+        .filter(|&(x, _)| is_on_taskbar(&monitor, x, y))
         .map(|(_, pixel)| pixel)
         .collect();
 
     if pixels.len() < MIN_SAMPLES {
         return Ok(None);
     }
-    Ok(Some(hex(median(&pixels))))
+    Ok(Some(rgb_to_hex(median(&pixels))))
 }
 
 /// Couleur d'accentuation choisie dans les paramètres de Windows.
 fn accent_color(settings: &UISettings) -> Option<String> {
     let color = settings.GetColorValue(UIColorType::Accent).ok()?;
-    Some(hex([color.R, color.G, color.B]))
+    Some(rgb_to_hex([color.R, color.G, color.B]))
 }
 
 fn read_with(window: &WebviewWindow, settings: Option<&UISettings>) -> tauri::Result<SystemColors> {

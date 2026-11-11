@@ -77,6 +77,7 @@ fn resubscribe(
     Ok(())
 }
 
+/// Lit la piste en cours de la source choisie et envoi au front si elle a changé
 fn publish(app: &AppHandle, emitter: &mut TrackEmitter) {
     let selected = app.state::<AudioSourceState>().selected();
     // Thread dédié : attendre ici ne bloque aucun autre travail.

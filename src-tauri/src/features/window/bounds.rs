@@ -4,14 +4,14 @@ use windows::Win32::Graphics::Gdi::{MONITOR_DEFAULTTONEAREST, MonitorFromRect};
 use windows::Win32::UI::Shell::{DefSubclassProc, SetWindowSubclass};
 use windows::Win32::UI::WindowsAndMessaging::WM_MOVING;
 
-use super::win32::monitor_rect;
+use super::win32::get_monitor_rect;
 
 /// Identifiant de ce sous-classement parmi ceux de la fenêtre.
 const SUBCLASS_ID: usize = 1;
 
 /// Remonte le rectangle proposé pour qu'il ne dépasse pas le bas de son écran.
 fn keep_above_screen_bottom(rect: &mut RECT) {
-    let Some(screen) = monitor_rect(unsafe { MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST) }) else {
+    let Some(screen) = get_monitor_rect(unsafe { MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST) }) else {
         return;
     };
     let overflow = rect.bottom - screen.bottom;
@@ -21,6 +21,7 @@ fn keep_above_screen_bottom(rect: &mut RECT) {
     }
 }
 
+/// Reçoit les messages de la fenêtre avant son traitement habituel.
 unsafe extern "system" fn on_message(
     hwnd: HWND,
     message: u32,
@@ -30,15 +31,15 @@ unsafe extern "system" fn on_message(
     _data: usize,
 ) -> LRESULT {
     if message == WM_MOVING {
-        // `lparam` pointe sur le rectangle que Windows s'apprête à appliquer : on le corrige avant qu'il le soit.
+        // Pendant un déplacement à la souris, Windows envoie la position qu'il va donner à la fenêtre
+        // sous forme d'un rectangle (`lparam`). Le modifier ici change l'endroit où la fenêtre est réellement placée.
         keep_above_screen_bottom(unsafe { &mut *(lparam.0 as *mut RECT) });
     }
     unsafe { DefSubclassProc(hwnd, message, wparam, lparam) }
 }
 
-/// Empêche de faire glisser le widget sous le bord bas de l'écran (donc sous la barre des tâches).
-/// À appeler depuis le thread de la fenêtre : Windows n'accepte le sous-classement que depuis celui-ci.
-pub fn limit_to_screen_bottom(window: &WebviewWindow) {
+/// Empêche de faire glisser le widget sous le bord bas de l'écran.
+pub fn install_bottom_limit(window: &WebviewWindow) {
     let hwnd = match window.hwnd() {
         Ok(hwnd) => hwnd,
         Err(e) => {

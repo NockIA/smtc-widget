@@ -2,7 +2,7 @@ use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 
 use super::models::MonitorEntry;
 use super::size::{physical_size, scale_from_width};
-use super::taskbar_layout::right_cluster_left;
+use super::taskbar_layout::find_system_area_left_edge;
 use crate::features::preferences::{DEFAULT_SCALE, MonitorPlacement, Preferences};
 
 const DEFAULT_BOTTOM_MARGIN: f64 = 0.0;
@@ -10,9 +10,8 @@ const DEFAULT_BOTTOM_MARGIN: f64 = 0.0;
 /// Espace (pixels logiques) laissé entre le widget et les éléments de droite de la barre.
 const TASKBAR_GAP: f64 = 8.0;
 
-/// Marges de repli (pixels logiques) quand la barre des tâches n'est pas lisible.
-const SECONDARY_SCREEN_RIGHT_MARGIN: f64 = 75.0;
-const PRIMARY_SCREEN_RIGHT_MARGIN: f64 = 210.0;
+/// Marge droite de repli (pixels logiques) quand la barre des tâches n'est pas lisible.
+const FALLBACK_RIGHT_MARGIN: f64 = 75.0;
 
 /// Identifiant d'un écran pour les préférences : nom + résolution.
 pub fn monitor_key(monitor: &Monitor) -> String {
@@ -32,28 +31,21 @@ fn monitor_bottom(monitor: &Monitor) -> i32 {
     monitor.position().y + monitor.size().height as i32
 }
 
-fn is_secondary(primary: Option<&Monitor>, monitor: &Monitor) -> bool {
-    primary.is_none_or(|p| monitor.position() != p.position())
+fn is_primary(primary: Option<&Monitor>, monitor: &Monitor) -> bool {
+    primary.is_some_and(|p| monitor.position() == p.position())
 }
 
 /// Position par défaut : juste à gauche de ce qui occupe la droite de la barre des tâches
 /// (météo, zone de notification, horloge), sinon les marges fixes.
-pub fn default_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Result<MonitorPlacement> {
-    let right_margin = if let Some(left) = right_cluster_left(monitor) {
+pub fn default_placement(monitor: &Monitor) -> MonitorPlacement {
+    let right_margin = find_system_area_left_edge(monitor).map_or(FALLBACK_RIGHT_MARGIN, |left| {
         f64::from(monitor_right(monitor) - left) / monitor.scale_factor() + TASKBAR_GAP
-    } else {
-        let primary = window.primary_monitor()?;
-        if is_secondary(primary.as_ref(), monitor) {
-            SECONDARY_SCREEN_RIGHT_MARGIN
-        } else {
-            PRIMARY_SCREEN_RIGHT_MARGIN
-        }
-    };
-    Ok(MonitorPlacement {
+    });
+    MonitorPlacement {
         right_margin,
         bottom_margin: DEFAULT_BOTTOM_MARGIN,
         scale: DEFAULT_SCALE,
-    })
+    }
 }
 
 pub fn current_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Result<MonitorPlacement> {
@@ -104,21 +96,17 @@ fn choose_monitor(window: &WebviewWindow, prefs: &Preferences) -> tauri::Result<
         .last_monitor
         .as_ref()
         .and_then(|key| monitors.iter().find(|m| monitor_key(m) == *key));
-    let secondary = monitors.iter().find(|m| is_secondary(primary.as_ref(), m));
 
-    Ok(last_used
-        .or(secondary)
-        .or(primary.as_ref())
-        .or(monitors.first())
-        .cloned())
+    Ok(last_used.or(primary.as_ref()).or(monitors.first()).cloned())
 }
 
 /// Position sauvegardée pour cet écran, sinon celle par défaut.
-fn placement_for(window: &WebviewWindow, prefs: &Preferences, monitor: &Monitor) -> tauri::Result<MonitorPlacement> {
-    match prefs.monitors.get(&monitor_key(monitor)) {
-        Some(saved) => Ok(*saved),
-        None => default_placement(window, monitor),
-    }
+fn placement_for(prefs: &Preferences, monitor: &Monitor) -> MonitorPlacement {
+    prefs
+        .monitors
+        .get(&monitor_key(monitor))
+        .copied()
+        .unwrap_or_else(|| default_placement(monitor))
 }
 
 pub fn place_on_preferred_monitor(window: &WebviewWindow, prefs: &Preferences) -> tauri::Result<()> {
@@ -126,7 +114,7 @@ pub fn place_on_preferred_monitor(window: &WebviewWindow, prefs: &Preferences) -
         return Ok(());
     };
 
-    apply(window, &monitor, placement_for(window, prefs, &monitor)?)
+    apply(window, &monitor, placement_for(prefs, &monitor))
 }
 
 pub fn list_monitors(window: &WebviewWindow) -> tauri::Result<Vec<MonitorEntry>> {
@@ -139,10 +127,10 @@ pub fn list_monitors(window: &WebviewWindow) -> tauri::Result<Vec<MonitorEntry>>
         .enumerate()
         .map(|(index, monitor)| {
             let key = monitor_key(monitor);
-            let suffix = if is_secondary(primary.as_ref(), monitor) {
-                ""
-            } else {
+            let suffix = if is_primary(primary.as_ref(), monitor) {
                 " (principal)"
+            } else {
+                ""
             };
             MonitorEntry {
                 label: format!(
@@ -166,11 +154,11 @@ pub fn move_to_monitor(window: &WebviewWindow, prefs: &Preferences, key: &str) -
         return Ok(());
     };
 
-    apply(window, monitor, placement_for(window, prefs, monitor)?)
+    apply(window, monitor, placement_for(prefs, monitor))
 }
 
 /// Empreinte de la disposition des écrans (noms, tailles, positions), pour détecter un changement.
-pub fn monitors_signature(window: &WebviewWindow) -> tauri::Result<String> {
+pub fn compute_monitors_signature(window: &WebviewWindow) -> tauri::Result<String> {
     let mut parts: Vec<String> = window
         .available_monitors()?
         .iter()
