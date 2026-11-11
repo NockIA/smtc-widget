@@ -144,6 +144,10 @@ Les constantes restent en tête du fichier qui les utilise.
 
 - [Zed](https://zed.dev/) avec l'extension Rust (rust-analyzer est intégré)
 
+## Licence
+
+Distribué sous licence MIT, voir le fichier `LICENSE`.
+
 ## À propos de ce projet
 
 Ce projet est aussi un terrain d'apprentissage, notamment pour Rust et Tauri. Je me suis appuyé en partie sur l'IA (Claude, d'Anthropic) pour me guider, relire mon code, comprendre des concepts (propriété, threads, `unsafe`, API Windows…) et trouver des pistes d'amélioration.
