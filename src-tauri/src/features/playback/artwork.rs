@@ -117,7 +117,9 @@ fn to_data_url(artwork: &IRandomAccessStreamWithContentType) -> windows::core::R
         Ok(jpeg) => (DEFAULT_MIME.to_owned(), jpeg),
         Err(e) => {
             log::warn!("réduction de la pochette a échoué, image d'origine conservée : {e}");
-            let mime = artwork.ContentType().map(|mime| mime.to_string()).unwrap_or_default();
+            let mime = artwork
+                .ContentType()
+                .map_or_else(|_| String::new(), |mime| mime.to_string());
             let mime = if mime.is_empty() { DEFAULT_MIME.to_owned() } else { mime };
             (mime, read_all(&stream)?)
         }

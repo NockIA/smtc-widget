@@ -22,16 +22,14 @@ pub fn source_id(session: &Session) -> String {
     session
         .SourceAppUserModelId()
         .inspect_err(|e| log::warn!("lecture de l'identifiant de source a échoué : {e}"))
-        .map(|id| id.to_string())
-        .unwrap_or_default()
+        .map_or_else(|_| String::new(), |id| id.to_string())
 }
 
 pub fn all_sessions(manager: &SmtcManager) -> Vec<Session> {
     manager
         .GetSessions()
         .inspect_err(|e| log::warn!("liste des sessions SMTC illisible : {e}"))
-        .map(|sessions| sessions.into_iter().collect())
-        .unwrap_or_default()
+        .map_or_else(|_| Vec::new(), |sessions| sessions.into_iter().collect())
 }
 
 /// Session active (voir `resolve_session`), en créant le manager au besoin.
