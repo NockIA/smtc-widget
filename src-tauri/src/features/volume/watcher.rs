@@ -214,10 +214,21 @@ struct Worker {
     tx: Sender<Message>,
     current: Arc<Mutex<Option<f32>>>,
     enumerator: IMMDeviceEnumerator,
+    /// Windows ne retient pas cet objet : il doit rester vivant tant qu'il est enregistré.
+    device_events: IMMNotificationClient,
     source: Option<String>,
     subscription: Option<Subscription>,
     /// Garde COM du thread : à libérer en dernier.
     _com: ComGuard,
+}
+
+impl Drop for Worker {
+    fn drop(&mut self) {
+        let _ = unsafe {
+            self.enumerator
+                .UnregisterEndpointNotificationCallback(&self.device_events)
+        };
+    }
 }
 
 impl Worker {
@@ -231,6 +242,7 @@ impl Worker {
             tx,
             current,
             enumerator,
+            device_events,
             source: None,
             subscription: None,
             _com: com,
