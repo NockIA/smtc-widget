@@ -1,5 +1,6 @@
 use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 
+use super::display_names::{get_display_number, get_friendly_names};
 use super::models::MonitorEntry;
 use super::size::{physical_size, scale_from_width};
 use super::taskbar_layout::find_system_area_left_edge;
@@ -120,31 +121,38 @@ pub fn place_on_preferred_monitor(window: &WebviewWindow, prefs: &Preferences) -
 pub fn list_monitors(window: &WebviewWindow) -> tauri::Result<Vec<MonitorEntry>> {
     let primary = window.primary_monitor()?;
     let current = window.current_monitor()?.map(|m| monitor_key(&m));
+    let friendly_names = get_friendly_names();
 
-    Ok(window
+    // Numérotation de Paramètres › Affichage ; l'ordre d'énumération sert seulement de repli.
+    let mut numbered: Vec<(u32, MonitorEntry)> = window
         .available_monitors()?
         .iter()
-        .enumerate()
-        .map(|(index, monitor)| {
+        .zip(1..)
+        .map(|(monitor, fallback_number)| {
+            let display_name = monitor.name().map_or("", String::as_str);
+            let number = get_display_number(display_name).unwrap_or(fallback_number);
             let key = monitor_key(monitor);
+
+            let mut parts = vec![format!("Écran {number}")];
+            parts.extend(friendly_names.get(display_name).cloned());
+            parts.push(format!("{}x{}", monitor.size().width, monitor.size().height));
             let suffix = if is_primary(primary.as_ref(), monitor) {
                 " (principal)"
             } else {
                 ""
             };
-            MonitorEntry {
-                label: format!(
-                    "Écran {} - {}x{}{}",
-                    index + 1,
-                    monitor.size().width,
-                    monitor.size().height,
-                    suffix
-                ),
+
+            let entry = MonitorEntry {
+                label: format!("{}{suffix}", parts.join(" - ")),
                 current: current.as_deref() == Some(key.as_str()),
                 key,
-            }
+            };
+            (number, entry)
         })
-        .collect())
+        .collect();
+    numbered.sort_by_key(|(number, _)| *number);
+
+    Ok(numbered.into_iter().map(|(_, entry)| entry).collect())
 }
 
 /// Déplace la fenêtre sur l'écran `key`, à sa position sauvegardée ou par défaut.

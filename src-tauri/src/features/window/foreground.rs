@@ -76,7 +76,7 @@ fn is_notification_state_fullscreen() -> bool {
 struct FullscreenSearch {
     widget: HWND,
     screen: RECT,
-    found: bool,
+    found: Option<HWND>,
 }
 
 impl FullscreenSearch {
@@ -109,37 +109,37 @@ impl FullscreenSearch {
 
 unsafe extern "system" fn is_search_continuing(window: HWND, search: LPARAM) -> BOOL {
     let search = unsafe { &mut *(search.0 as *mut FullscreenSearch) };
-    search.found = search.is_fullscreen(window);
+    search.found = search.is_fullscreen(window).then_some(window);
     // Arrête l'énumération dès qu'une fenêtre plein écran est trouvée.
-    (!search.found).into()
+    search.found.is_none().into()
 }
 
-/// Vrai si une application recouvre tout l'écran où se trouve le widget, qu'elle soit active ou non
+/// Cherche une application qui recouvre tout l'écran où se trouve le widget, qu'elle soit active ou non
 /// (par exemple juste après avoir déplacé le widget sur un écran où une vidéo est déjà en plein écran).
-fn has_fullscreen_window_on_widget_screen() -> bool {
+fn find_fullscreen_window_on_widget_screen() -> Option<HWND> {
     let widget = HWND(WIDGET_HWND.load(Ordering::Relaxed) as *mut _);
-    let Some(screen) = get_monitor_rect(unsafe { MonitorFromWindow(widget, MONITOR_DEFAULTTONEAREST) }) else {
-        return false;
-    };
+    let screen = get_monitor_rect(unsafe { MonitorFromWindow(widget, MONITOR_DEFAULTTONEAREST) })?;
 
     let mut search = FullscreenSearch {
         widget,
         screen,
-        found: false,
+        found: None,
     };
     // Une énumération interrompue par le callback renvoie une erreur : ce n'est pas un échec.
     let _ = unsafe { EnumWindows(Some(is_search_continuing), LPARAM(&raw mut search as isize)) };
     search.found
 }
 
-fn fullscreen_cause() -> Option<&'static str> {
+fn fullscreen_cause() -> Option<String> {
     if is_notification_state_fullscreen() {
-        Some("état de notification Windows")
-    } else if has_fullscreen_window_on_widget_screen() {
-        Some("fenêtre plein écran sur l'écran du widget")
-    } else {
-        None
+        return Some("état de notification Windows".to_owned());
     }
+    find_fullscreen_window_on_widget_screen().map(|window| {
+        format!(
+            "fenêtre plein écran de classe {} sur l'écran du widget",
+            get_window_class_name(window)
+        )
+    })
 }
 
 fn set_hidden(window: &WebviewWindow, hidden: bool) {
@@ -159,10 +159,10 @@ fn sync_visibility(window: &WebviewWindow) -> bool {
     let cause = fullscreen_cause();
     let fullscreen = cause.is_some();
     if fullscreen != is_hidden() {
-        log::debug!(
+        log::info!(
             "widget {} ({})",
             if fullscreen { "caché" } else { "réaffiché" },
-            cause.unwrap_or("plus de plein écran")
+            cause.as_deref().unwrap_or("plus de plein écran")
         );
         set_hidden(window, fullscreen);
     }

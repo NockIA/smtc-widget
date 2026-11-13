@@ -1,6 +1,7 @@
 mod api;
 mod bounds;
 pub mod commands;
+mod display_names;
 mod foreground;
 mod layout;
 mod models;
