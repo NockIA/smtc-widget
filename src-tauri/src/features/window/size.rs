@@ -57,6 +57,11 @@ pub fn set_current(layout: Layout) {
     *CURRENT.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = layout;
 }
 
+/// Zoom pour que la hauteur du widget égale `height` (pixels logiques).
+pub fn scale_for_height(height: f64) -> f64 {
+    clamp_scale(height / BASE_HEIGHT)
+}
+
 pub fn clamp_scale(scale: f64) -> f64 {
     scale.clamp(MIN_SCALE, MAX_SCALE)
 }

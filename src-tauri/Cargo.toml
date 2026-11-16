@@ -36,6 +36,7 @@ windows-core = "0.62"
 version = "0.62.2"
 features = [
   "Win32_Devices_Display",
+  "Wdk_System_SystemServices",
   "Win32_Foundation",
   "Win32_Graphics_Dwm",
   "Win32_Graphics_Gdi",

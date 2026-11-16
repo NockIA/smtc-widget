@@ -10,6 +10,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON};
 use windows::Win32::UI::WindowsAndMessaging::{GetCursorPos, SWP_NOACTIVATE, SWP_NOZORDER, SetWindowPos};
 
 use super::foreground::is_hidden;
+use super::placement::default_scale;
 use super::size::{Layout, current, factor_from_width, physical_size, set_current};
 
 /// Cadence de mise à jour pendant le glissé (~60 images par seconde).
@@ -150,11 +151,21 @@ pub fn start(window: WebviewWindow, handle: Handle) {
     });
 }
 
-/// Remet le widget à sa taille de base.
+/// Taille par défaut : la hauteur de la barre des tâches de l'écran du widget, sans élargissement.
+fn default_layout(window: &WebviewWindow) -> Layout {
+    let scale = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .map_or(Layout::default().scale, |monitor| default_scale(&monitor));
+    Layout::new(scale, Layout::default().stretch)
+}
+
+/// Remet le widget à sa taille par défaut.
 pub fn reset(window: &WebviewWindow) {
     let result = Anchored::of(window, Handle::Corner)
         .map_err(Box::<dyn Error>::from)
-        .and_then(|anchored| anchored.resize(window, Layout::default()));
+        .and_then(|anchored| anchored.resize(window, default_layout(window)));
     if let Err(e) = result {
         log::error!("réinitialisation de la taille a échoué : {e}");
     }

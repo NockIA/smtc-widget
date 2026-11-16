@@ -2,9 +2,9 @@ use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 
 use super::display_names::{get_display_number, get_friendly_names};
 use super::models::MonitorEntry;
-use super::size::{Layout, current, physical_size, set_current};
-use super::taskbar_layout::find_system_area_left_edge;
-use crate::features::preferences::{DEFAULT_SCALE, DEFAULT_STRETCH, MonitorPlacement, Preferences};
+use super::size::{Layout, current, physical_size, scale_for_height, set_current};
+use super::taskbar_layout::{find_system_area_left_edge, taskbar_height};
+use crate::features::preferences::{DEFAULT_STRETCH, MonitorPlacement, Preferences};
 
 const DEFAULT_BOTTOM_MARGIN: f64 = 0.0;
 
@@ -36,6 +36,11 @@ fn is_primary(primary: Option<&Monitor>, monitor: &Monitor) -> bool {
     primary.is_some_and(|p| monitor.position() == p.position())
 }
 
+/// Zoom par défaut : le widget a la hauteur de la barre des tâches de cet écran.
+pub fn default_scale(monitor: &Monitor) -> f64 {
+    scale_for_height(taskbar_height(monitor))
+}
+
 /// Position par défaut : juste à gauche de ce qui occupe la droite de la barre des tâches
 /// (météo, zone de notification, horloge), sinon les marges fixes.
 pub fn default_placement(monitor: &Monitor) -> MonitorPlacement {
@@ -45,7 +50,7 @@ pub fn default_placement(monitor: &Monitor) -> MonitorPlacement {
     MonitorPlacement {
         right_margin,
         bottom_margin: DEFAULT_BOTTOM_MARGIN,
-        scale: DEFAULT_SCALE,
+        scale: default_scale(monitor),
         stretch: DEFAULT_STRETCH,
     }
 }
