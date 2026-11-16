@@ -47,12 +47,14 @@ const SmtcWidget = () => {
     >
       <div className={cx("widget-handle", panels.visible && "visible")}>
         <DragHandle />
-        <ResizeHandle />
+        <ResizeHandle kind="left" />
+        <ResizeHandle kind="corner" />
       </div>
       <div className={cx("widget-content", panels.visible && "shifted")}>
         {albumArt && <img className="album-art" src={albumArt} alt="" />}
         <TrackText track={track} hovered={panels.visible} />
       </div>
+      {panels.visible && <ResizeHandle kind="right" />}
       {track !== null && (
         <>
           <div ref={panelRef} className={cx("widget-actions", panels.visible && "visible")}>

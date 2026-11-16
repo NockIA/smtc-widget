@@ -15,5 +15,6 @@ mod win32;
 
 pub use api::{init_placement, move_to_monitor};
 pub use foreground::{is_hidden, keep_on_top, pause_keep_on_top};
-pub use placement::{current_scale, list_monitors};
+pub use placement::list_monitors;
 pub use resize::reset as reset_size;
+pub use size::current_scale;

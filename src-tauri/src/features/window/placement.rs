@@ -2,9 +2,9 @@ use tauri::{Monitor, PhysicalPosition, WebviewWindow};
 
 use super::display_names::{get_display_number, get_friendly_names};
 use super::models::MonitorEntry;
-use super::size::{physical_size, scale_from_width};
+use super::size::{Layout, current, physical_size, set_current};
 use super::taskbar_layout::find_system_area_left_edge;
-use crate::features::preferences::{DEFAULT_SCALE, MonitorPlacement, Preferences};
+use crate::features::preferences::{DEFAULT_SCALE, DEFAULT_STRETCH, MonitorPlacement, Preferences};
 
 const DEFAULT_BOTTOM_MARGIN: f64 = 0.0;
 
@@ -46,6 +46,7 @@ pub fn default_placement(monitor: &Monitor) -> MonitorPlacement {
         right_margin,
         bottom_margin: DEFAULT_BOTTOM_MARGIN,
         scale: DEFAULT_SCALE,
+        stretch: DEFAULT_STRETCH,
     }
 }
 
@@ -53,6 +54,7 @@ pub fn current_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Re
     let position = window.outer_position()?;
     let size = window.outer_size()?;
     let scale = monitor.scale_factor();
+    let layout = current();
 
     let right = monitor_right(monitor) - (position.x + size.width as i32);
     let bottom = monitor_bottom(monitor) - (position.y + size.height as i32);
@@ -60,22 +62,16 @@ pub fn current_placement(window: &WebviewWindow, monitor: &Monitor) -> tauri::Re
     Ok(MonitorPlacement {
         right_margin: f64::from(right) / scale,
         bottom_margin: f64::from(bottom) / scale,
-        scale: scale_from_width(f64::from(size.width), scale),
+        scale: layout.scale,
+        stretch: layout.stretch,
     })
-}
-
-/// Échelle actuelle du widget (1.0 = taille de base).
-pub fn current_scale(window: &WebviewWindow) -> tauri::Result<f64> {
-    Ok(scale_from_width(
-        f64::from(window.outer_size()?.width),
-        window.scale_factor()?,
-    ))
 }
 
 /// Applique l'échelle puis la position, en gardant le coin bas-droit ancré.
 pub fn apply(window: &WebviewWindow, monitor: &Monitor, placement: MonitorPlacement) -> tauri::Result<()> {
     let dpi = monitor.scale_factor();
-    let size = physical_size(placement.scale, dpi);
+    let layout = Layout::new(placement.scale, placement.stretch);
+    let size = physical_size(layout, dpi);
     let position = PhysicalPosition::new(
         monitor_right(monitor) - size.width as i32 - (placement.right_margin * dpi) as i32,
         // Une position enregistrée sous le bord de l'écran (avant la limite du déplacement) est ramenée sur l'écran.
@@ -85,7 +81,8 @@ pub fn apply(window: &WebviewWindow, monitor: &Monitor, placement: MonitorPlacem
     // Entrer d'abord sur l'écran cible : un changement de DPI peut redimensionner la fenêtre, la taille se règle ensuite.
     window.set_position(position)?;
     window.set_size(size)?;
-    window.set_zoom(placement.scale)?;
+    window.set_zoom(layout.scale)?;
+    set_current(layout);
     window.set_position(position)
 }
 

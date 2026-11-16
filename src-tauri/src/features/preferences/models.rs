@@ -11,8 +11,15 @@ const SCALE_EPSILON: f64 = 0.01;
 /// Taille de base du widget (100 %).
 pub const DEFAULT_SCALE: f64 = 1.0;
 
+/// Élargissement de base (sans espace ajouté entre les éléments).
+pub const DEFAULT_STRETCH: f64 = 1.0;
+
 fn default_scale() -> f64 {
     DEFAULT_SCALE
+}
+
+fn default_stretch() -> f64 {
+    DEFAULT_STRETCH
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -52,6 +59,9 @@ pub struct MonitorPlacement {
     /// Absent des préférences enregistrées avant l'ajout du redimensionnement.
     #[serde(default = "default_scale")]
     pub scale: f64,
+    /// Élargissement seul de la fenêtre (1.0 = largeur de base à cette échelle).
+    #[serde(default = "default_stretch")]
+    pub stretch: f64,
 }
 
 impl MonitorPlacement {
@@ -59,6 +69,7 @@ impl MonitorPlacement {
         (self.right_margin - other.right_margin).abs() < POSITION_EPSILON
             && (self.bottom_margin - other.bottom_margin).abs() < POSITION_EPSILON
             && (self.scale - other.scale).abs() < SCALE_EPSILON
+            && (self.stretch - other.stretch).abs() < SCALE_EPSILON
     }
 }
 

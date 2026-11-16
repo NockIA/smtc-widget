@@ -5,6 +5,9 @@ import { TrackInfo } from "@/types/track.types";
 
 import { logger } from "./logger.utils";
 
+/** Coin haut-gauche : zoom du contenu. Bords gauche et droit : élargissement seul. */
+export type ResizeHandleKind = "corner" | "left" | "right";
+
 type MediaAction = "previous" | "togglePlayPause" | "next";
 
 /**
@@ -27,6 +30,6 @@ export const commands = {
   getSystemColors: () => call<SystemColors>("get_system_colors"),
   refreshSystemColors: () => call("refresh_system_colors"),
   showContextMenu: (x: number) => call("show_context_menu", { x }),
-  startResize: () => call("start_resize"),
+  startResize: (handle: ResizeHandleKind) => call("start_resize", { handle }),
   resetSize: () => call("reset_size"),
 };

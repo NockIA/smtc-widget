@@ -1,10 +1,29 @@
+/* Bandes sur les bords gauche et droit, sur toute la hauteur du widget. */
 .resize-handle {
   position: absolute;
   top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 6px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.resize-handle-left {
   left: 0;
-  z-index: 1;
+}
+
+.resize-handle-right {
+  right: 0;
+}
+
+/* Coin haut-gauche : zoom du contenu, au-dessus de la bande du bord gauche. */
+.resize-handle-corner {
+  top: 0;
+  bottom: auto;
+  left: 0;
+  z-index: 3;
   width: 12px;
   height: 12px;
   cursor: nwse-resize;
-  touch-action: none;
 }
