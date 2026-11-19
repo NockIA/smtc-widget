@@ -80,6 +80,28 @@ Côté Rust, depuis `src-tauri/` :
 | `cargo fmt`         | Formate le code (config : `rustfmt.toml`)        |
 | `cargo fmt --check` | Vérifie le formatage sans rien modifier          |
 
+## Créer une release
+
+La release est construite par GitHub Actions (`.github/workflows/release.yml`) quand on pousse un tag `vX.Y.Z`. Un simple `git push` ne déclenche rien.
+
+1. Passer la version à `X.Y.Z` dans les trois fichiers (elle doit être identique partout) :
+   - `package.json`
+   - `src-tauri/tauri.conf.json`
+   - `src-tauri/Cargo.toml` (puis lancer `cargo check` dans `src-tauri/` pour mettre à jour `Cargo.lock`)
+2. Vérifier en local que tout passe : `npm run lint`, `npm run format:check`, puis `cargo fmt --check` et `cargo clippy --all-targets -- -D warnings` depuis `src-tauri/`.
+3. Committer le changement de version (ex. `chore(release): passe la version à X.Y.Z`) et le pousser sur `main`.
+4. Créer et pousser le tag :
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+5. Suivre l'exécution dans l'onglet Actions du dépôt. Le workflow relance les vérifications (lint, format, clippy) : si l'une échoue, aucune release n'est créée. Sinon il construit l'installateur NSIS.
+6. La release est créée en **brouillon** : aller dans [Releases](https://github.com/NockIA/smtc-widget/releases), vérifier l'installateur (`smtc-widget_X.Y.Z_x64-setup.exe`), rédiger les notes de version, puis cliquer sur « Publish release ».
+
+En cas d'échec, corriger puis supprimer le tag avant de le recréer : `git tag -d vX.Y.Z` et `git push origin :refs/tags/vX.Y.Z`.
+
 ## En cas d'erreur : journal de log
 
 Si le widget affiche « Une erreur est survenue » (triangle rouge) ou se comporte de façon anormale,
